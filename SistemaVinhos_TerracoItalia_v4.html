@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Terraço Itália — Vinhos</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+
+:root{--navy:#1a2744;--navy2:#243358;--gold:#b8943f;--goldl:#d4aa5a;--goldp:#f5edd8;--cream:#faf7f2;--white:#fff;--red:#8b1a1a;--redp:#fdf0f0;--green:#1a4a2e;--greenp:#edf5f0;--amber:#7a4a00;--amberp:#fff8ec;--grey:#8a8a8a;--greyl:#f0ede8;--border:#e0d8cc;--sh:0 4px 24px rgba(26,39,68,.10);--shl:0 12px 48px rgba(26,39,68,.16);--r:4px;--rl:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--navy);min-height:100vh;font-size:14px}
+/* PIN SCREEN */
+#pin-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:0}
+.pin-logo{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--goldl);letter-spacing:.08em;margin-bottom:6px}
+.pin-sub{font-size:11px;color:rgba(255,255,255,.4);font-family:'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;margin-bottom:40px}
+.pin-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:32px 40px;text-align:center;min-width:320px}
+.pin-label{font-size:12px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px}
+.pin-display{font-family:'DM Mono',monospace;font-size:32px;letter-spacing:.4em;color:var(--goldl);height:48px;display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--goldl);margin:0 4px;transition:background .15s}
+.pin-dot.filled{background:var(--goldl)}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.pin-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:white;font-size:20px;font-family:'DM Mono',monospace;padding:14px;cursor:pointer;transition:background .15s}
+.pin-btn:hover{background:rgba(255,255,255,.16)}
+.pin-btn:active{background:rgba(255,255,255,.24)}
+.pin-clear{background:transparent;border:none;color:rgba(255,255,255,.4);font-size:12px;cursor:pointer;padding:8px;font-family:'Outfit',sans-serif}
+.pin-err{color:#f87171;font-size:12px;margin-top:8px;min-height:18px}
+.pin-role-info{margin-top:20px;font-size:10px;color:rgba(255,255,255,.3);font-family:'DM Mono',monospace;text-align:left;line-height:2}
+/* LAYOUT */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;min-width:220px;background:var(--navy);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.sidebar-logo{padding:24px 20px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.brand{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--goldl);letter-spacing:.05em;line-height:1.2}
+.s-sub{font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.12em;text-transform:uppercase;margin-top:3px;font-family:'DM Mono',monospace}
+.nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-sec{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.28);padding:14px 20px 5px;font-family:'DM Mono',monospace}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 20px;color:rgba(255,255,255,.6);cursor:pointer;transition:all .2s;font-size:12px;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.06);color:white}
+.nav-item.active{background:rgba(184,148,63,.15);color:var(--goldl);border-left-color:var(--gold);font-weight:500}
+.nav-item .ico{font-size:14px;width:16px;text-align:center}
+.nav-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--red);color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;margin-left:auto}
+.s-footer{padding:12px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:9px;color:rgba(255,255,255,.25);font-family:'DM Mono',monospace;line-height:1.8}
+.s-user{color:var(--goldl);font-weight:500;font-size:10px;margin-bottom:2px}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column}
+.topbar{background:white;border-bottom:1px solid var(--border);padding:0 28px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:400}
+.topbar-meta{font-size:11px;color:var(--grey);font-family:'DM Mono',monospace;display:flex;gap:16px;align-items:center}
+.badge-live{display:flex;align-items:center;gap:5px;background:var(--greenp);color:var(--green);padding:3px 10px;border-radius:20px;font-size:10px;font-weight:500}
+.badge-live::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.role-badge{padding:2px 10px;border-radius:20px;font-size:10px;font-weight:600;font-family:'DM Mono',monospace}
+.role-sommelier{background:var(--goldp);color:var(--amber)}
+.role-maitre{background:#e8edf5;color:var(--navy)}
+.role-staff{background:var(--greenp);color:var(--green)}
+.content{padding:28px;flex:1}
+.view{display:none;animation:fadeIn .25s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px}
+.kpi-card{background:white;border:1px solid var(--border);border-radius:var(--rl);padding:16px 14px;position:relative;overflow:hidden}
+.kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-card.c-navy::after{background:var(--navy)}.kpi-card.c-gold::after{background:var(--gold)}.kpi-card.c-green::after{background:var(--green)}.kpi-card.c-red::after{background:var(--red)}.kpi-card.c-amber::after{background:var(--amber)}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:var(--navy);line-height:1;margin-bottom:5px}
+.kpi-lbl{font-size:10px;color:var(--grey);text-transform:uppercase;letter-spacing:.08em;font-weight:500}
+.kpi-hint{font-size:9px;color:var(--gold);margin-top:3px;font-family:'DM Mono',monospace}
+/* SECTION */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:400}
+.sec-desc{font-size:11px;color:var(--grey);margin-top:2px}
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+.search-box{flex:1;min-width:180px;max-width:300px;position:relative}
+.search-box input{width:100%;padding:8px 12px 8px 32px;border:1px solid var(--border);border-radius:var(--r);background:white;font-family:'Outfit',sans-serif;font-size:12px;color:var(--navy);outline:none;transition:border-color .2s}
+.search-box input:focus{border-color:var(--gold)}
+.search-box::before{content:'⌕';position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--grey);font-size:15px}
+.fb{padding:7px 14px;border:1px solid var(--border);border-radius:var(--r);background:white;color:var(--grey);cursor:pointer;font-size:11px;font-family:'Outfit',sans-serif;font-weight:500;transition:all .2s;white-space:nowrap}
+.fb:hover{border-color:var(--navy);color:var(--navy)}
+.fb.on{background:var(--navy);color:white;border-color:var(--navy)}
+.fb.on-a{background:#1a4a2e;border-color:#1a4a2e;color:white}
+.fb.on-b{background:#7a4a00;border-color:#7a4a00;color:white}
+.fb.on-c{background:#555;border-color:#555;color:white}
+/* TABLE */
+.tw{background:white;border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh)}
+.tc-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--navy);color:rgba(255,255,255,.8);padding:10px 12px;text-align:left;font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;font-family:'DM Mono',monospace;white-space:nowrap}
+thead th:first-child{padding-left:18px}
+tbody tr{border-bottom:1px solid var(--greyl);transition:background .12s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#f7f4ef}
+tbody td{padding:10px 12px;font-size:12px;vertical-align:middle}
+tbody td:first-child{padding-left:18px}
+/* BADGES */
+.abc{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:700;font-family:'DM Mono',monospace}
+.abc-A{background:#c6efce;color:#1a4a2e}.abc-B{background:#ffeb9c;color:#7a4a00}.abc-C{background:#f2f2f2;color:#555}
+.fmt-tag{font-size:9px;padding:2px 7px;border-radius:20px;font-family:'DM Mono',monospace;font-weight:500}
+.fmt-750{background:#e8edf5;color:var(--navy)}.fmt-375{background:#f0f5e8;color:var(--green)}.fmt-Magnum{background:var(--goldp);color:var(--gold)}
+.st-tag{font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;font-family:'DM Mono',monospace}
+.st-ativo{background:var(--greenp);color:var(--green)}.st-em_revisao{background:var(--amberp);color:var(--amber);border:1px solid #e0c060}.st-inativo{background:#f2f2f2;color:#888}.st-suspenso{background:var(--redp);color:var(--red)}
+/* STOCK */
+.stock-inp{width:56px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-family:'DM Mono',monospace;text-align:center;color:var(--navy);outline:none;transition:border-color .2s}
+.stock-inp:focus{border-color:var(--gold)}
+.sdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block}
+.sdot-ok{background:#2d7a4a}.sdot-warn{background:#e8a000}.sdot-crit{background:#c0392b}.sdot-empty{background:#ddd}
+/* SPARKLINE */
+.spk{display:flex;align-items:flex-end;gap:2px;height:26px}
+.spk-b{width:7px;border-radius:2px 2px 0 0;background:var(--navy);opacity:.25;min-height:2px}
+.spk-b:last-child{opacity:.85}
+.spk-b.up{background:var(--green);opacity:.7}.spk-b.dn{background:var(--red);opacity:.6}
+/* DAILY CARDS */
+.daily-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.dc{background:white;border:1px solid var(--border);border-radius:var(--rl);padding:14px;transition:box-shadow .2s}
+.dc:hover{box-shadow:var(--sh)}
+.dc.crit{border-color:#f0a0a0;background:#fffafa}
+.dc.warn{border-color:#f0d080;background:#fffdf5}
+.dc.ok{border-color:#a0d0b0;background:#f9fdf9}
+.dc-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.dc-name{font-weight:600;font-size:12px;line-height:1.3;max-width:170px}
+.dc-cod{font-size:9px;color:var(--grey);font-family:'DM Mono',monospace;margin-top:2px}
+.dc-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.dc-m-val{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;color:var(--navy);line-height:1}
+.dc-m-lbl{font-size:8px;color:var(--grey);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.dc-row{display:flex;align-items:center;gap:8px}
+.dc-sinp{flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;font-family:'DM Mono',monospace;text-align:center;color:var(--navy);outline:none;transition:border-color .2s}
+.dc-sinp:focus{border-color:var(--gold)}
+.dc-bar{height:4px;border-radius:2px;background:var(--greyl);margin-top:8px;overflow:hidden}
+.dc-fill{height:100%;border-radius:2px;transition:width .4s ease,background .3s}
+/* SUBS */
+.sub-card{background:white;border:1px solid var(--border);border-radius:var(--rl);padding:16px;margin-bottom:10px}
+.sub-type{font-size:9px;padding:2px 9px;border-radius:20px;font-weight:600;font-family:'DM Mono',monospace;display:inline-block;margin-bottom:10px}
+.sub-falta{background:var(--redp);color:var(--red)}.sub-upsell{background:var(--amberp);color:var(--amber)}.sub-harmonizacao{background:var(--greenp);color:var(--green)}
+.sub-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.sub-wine{font-size:13px;font-weight:500;flex:1}
+.sub-arrow{font-size:16px;color:var(--gold)}
+.sub-motivo{font-size:11px;color:var(--grey);font-style:italic;margin-top:4px;padding-left:4px;border-left:2px solid var(--border)}
+.sub-prio{font-size:9px;font-family:'DM Mono',monospace;color:var(--grey)}
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(26,39,68,.6);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal{background:white;border-radius:var(--rl);padding:28px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shl)}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--navy);margin-bottom:4px}
+.modal-sub{font-size:11px;color:var(--grey);margin-bottom:20px}
+.form-row{margin-bottom:14px}
+.form-label{font-size:11px;font-weight:500;color:var(--navy);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.06em}
+.form-inp{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r);font-family:'Outfit',sans-serif;font-size:13px;color:var(--navy);outline:none;transition:border-color .2s}
+.form-inp:focus{border-color:var(--gold)}
+.form-sel{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r);font-family:'Outfit',sans-serif;font-size:13px;color:var(--navy);outline:none;background:white}
+.form-textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r);font-family:'Outfit',sans-serif;font-size:13px;color:var(--navy);outline:none;resize:vertical;min-height:80px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--greyl)}
+/* BUTTONS */
+.btn{padding:8px 18px;border-radius:var(--r);font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;border:none;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--navy);color:white}.btn-primary:hover{background:#243358}
+.btn-gold{background:var(--gold);color:white}.btn-gold:hover{background:#a07e30}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--navy)}.btn-outline:hover{border-color:var(--navy)}
+.btn-red{background:var(--red);color:white}.btn-red:hover{background:#6b1515}
+.btn-sm{padding:5px 12px;font-size:11px}
+/* IMPORT */
+.import-zone{border:2px dashed var(--border);border-radius:var(--rl);padding:40px;text-align:center;transition:all .2s;cursor:pointer}
+.import-zone:hover,.import-zone.drag{border-color:var(--gold);background:var(--goldp)}
+.import-icon{font-size:36px;margin-bottom:12px}
+.import-title{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--navy);margin-bottom:6px}
+.import-desc{font-size:12px;color:var(--grey)}
+.import-log{background:var(--navy);border-radius:var(--rl);padding:16px;margin-top:16px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,.7);max-height:200px;overflow-y:auto;line-height:2}
+.log-ok{color:#4ade80}.log-warn{color:#fbbf24}.log-err{color:#f87171}
+.import-review{margin-top:16px}
+.review-item{background:white;border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.review-name{flex:1;font-size:12px;font-weight:500}
+.review-lt{font-size:10px;font-family:'DM Mono',monospace;color:var(--grey);background:var(--greyl);padding:2px 7px;border-radius:20px}
+/* TC TABLE */
+.tc-acao{font-size:9px;padding:3px 9px;border-radius:20px;font-weight:600;white-space:nowrap}
+.tc-REMOVER{background:#fde8e8;color:var(--red)}.tc-FUNIL{background:#fff0cc;color:var(--amber)}.tc-REVISAR{background:#ffe8d0;color:#8b4000}.tc-MANTER{background:var(--greenp);color:var(--green)}
+/* HARM */
+.harm-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.harm-card{background:white;border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.harm-card-hdr{background:var(--navy);padding:10px 14px;display:flex;align-items:center;gap:8px}
+.harm-icon{font-size:18px}.harm-title{color:white;font-size:13px;font-weight:600}.harm-sub{color:rgba(255,255,255,.45);font-size:10px}
+.harm-body{padding:14px}
+.harm-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--greyl);font-size:12px}
+.harm-row:last-child{border-bottom:none}
+.harm-prato{font-weight:500}.harm-vinho{color:var(--gold);font-size:11px;text-align:right;max-width:180px}
+/* KPI view */
+.kpi-inp-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ki-card{background:white;border:1px solid var(--border);border-radius:var(--rl);padding:18px}
+.ki-title{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--navy);margin-bottom:3px}
+.ki-desc{font-size:10px;color:var(--grey);margin-bottom:14px}
+.ki-meta{font-size:11px;color:var(--grey);min-height:18px}
+.ki-bar{margin-top:8px;height:5px;background:var(--greyl);border-radius:3px;overflow:hidden}
+.ki-fill{height:100%;border-radius:3px;transition:width .5s,background .3s}
+/* CARTA */
+.carta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.carta-card{background:white;border:1px solid var(--border);border-radius:var(--rl);padding:14px;position:relative;overflow:hidden}
+.carta-card.em_revisao{border-color:#e0c060;background:#fffdf5}
+.carta-card.inativo{opacity:.6}
+.carta-status-bar{height:3px;position:absolute;top:0;left:0;right:0}
+.carta-card.ativo .carta-status-bar{background:var(--green)}.carta-card.em_revisao .carta-status-bar{background:var(--gold)}.carta-card.inativo .carta-status-bar{background:#ccc}.carta-card.suspenso .carta-status-bar{background:var(--red)}
+/* REPOS */
+.repos-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.repos-card{background:white;border:1px solid var(--border);border-radius:var(--rl);padding:14px 18px;text-align:center}
+.repos-num{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--navy);font-weight:600}
+.repos-lbl{font-size:10px;color:var(--grey);margin-top:3px}
+/* ALERTS */
+.alert{border-radius:var(--rl);padding:12px 16px;display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;font-size:12px}
+.alert-ico{font-size:16px;flex-shrink:0;margin-top:1px}
+.alert-red{background:var(--redp);border:1px solid #f0c0c0}
+.alert-amber{background:var(--amberp);border:1px solid #f0d080}
+.alert-green{background:var(--greenp);border:1px solid #a0d0b0}
+.alert-title{font-weight:600;color:var(--navy);margin-bottom:2px}
+.alert-body{color:var(--grey);font-size:11px}
+/* CHART */
+.bar-chart{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:flex;align-items:center;gap:8px}
+.bar-lbl{font-size:10px;color:var(--navy);width:150px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.bar-track{flex:1;height:18px;background:var(--greyl);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;transition:width .8s ease}
+.bar-fill span{font-size:9px;color:white;font-family:'DM Mono',monospace;font-weight:500}
+.chart-card{background:white;border:1px solid var(--border);border-radius:var(--rl);padding:18px 22px}
+.chart-title{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--navy);margin-bottom:14px}
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:white;padding:10px 18px;border-radius:var(--rl);font-size:12px;font-weight:500;box-shadow:var(--shl);z-index:999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+/* SOMMELIER ONLY */
+.sommelier-only{display:none}
+.sommelier-only.visible{display:block}
+.sommelier-only-flex{display:none}
+.sommelier-only-flex.visible{display:flex}
+.sommelier-only-grid{display:none}
+.sommelier-only-grid.visible{display:grid}
+
+
+/* ── CONNECTION BANNER ── */
+#conn-banner{position:fixed;bottom:0;left:0;right:0;z-index:600;padding:5px 18px;font-size:10px;font-family:'DM Mono',monospace;display:flex;align-items:center;gap:8px;background:rgba(26,39,68,.92);color:rgba(255,255,255,.55)}
+#conn-banner.online{background:rgba(26,74,46,.93)!important;color:#90f0a8!important}
+#conn-banner.offline{background:rgba(139,26,26,.93)!important;color:#ffc0c0!important}
+#conn-banner.syncing{animation:connblink 1.6s infinite}
+@keyframes connblink{0%,100%{opacity:1}50%{opacity:.7}}
+.cb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:#fbbf24}
+.cb-dot.online{background:#4ade80}.cb-dot.offline{background:#f87171}
+/* ── LOADING OVERLAY ── */
+#ld-overlay{position:fixed;inset:0;background:rgba(26,39,68,.5);z-index:400;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+#ld-overlay.show{display:flex}
+.ld-box{background:white;border-radius:12px;padding:24px 32px;text-align:center}
+.ld-spin{width:32px;height:32px;border:3px solid #e0d8cc;border-top-color:#b8943f;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-msg{font-size:13px;color:#1a2744;font-weight:500}
+.ld-sub{font-size:10px;color:#888;margin-top:2px;font-family:'DM Mono',monospace}
+/* ── STATUS ── */
+.s-db{font-size:9px;margin-top:3px}.s-db.online{color:#4ade80}.s-db.offline{color:#f87171}.s-db.ls{color:#fbbf24}
+.sync-badge{font-size:9px;padding:2px 7px;border-radius:20px;font-family:'DM Mono',monospace}
+.sb-online{background:#edf5f0;color:#1a4a2e}.sb-offline{background:#fdf0f0;color:#8b1a1a}.sb-saving{background:#fff8ec;color:#7a4a00}
+/* ── XLS BUTTON ── */
+.btn-xls{background:#217346!important;color:white!important;border:none!important}
+.btn-xls:hover{background:#1a5c38!important}
+
+</style>
+</head>
+<body>
+
+
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+  <div class="pin-logo">Terraço Itália</div>
+  <div class="pin-sub">Sistema de Gestão de Vinhos</div>
+  <div class="pin-box">
+    <div class="pin-label">Digite seu PIN</div>
+    <div class="pin-display" id="pin-display">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-grid" id="pin-grid">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn pin-clear" onclick="pinClear()">⌫</button>
+      <button class="pin-btn" onclick="pinPress('0')">0</button>
+      <button class="pin-btn pin-clear" onclick="pinReset()">✕</button>
+    </div>
+    <div class="pin-err" id="pin-err"></div>
+    <div class="pin-role-info">
+      Sommelier: 1234 &nbsp;·&nbsp; Maître: 5678 &nbsp;·&nbsp; Staff: 0000
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="layout" id="app" style="display:none">
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">Terraço Itália</div>
+    <div class="s-sub">Gestão de Vinhos</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-sec">Operação</div>
+    <div class="nav-item active" onclick="go('dashboard')"><span class="ico">◈</span> Dashboard</div>
+    <div class="nav-item" onclick="go('controle')"><span class="ico">◉</span> Controle Diário <span class="nav-badge" id="nb-rupt" style="display:none">!</span></div>
+    <div class="nav-item" onclick="go('pairstock')"><span class="ico">▦</span> Pair Stock</div>
+    <div class="nav-item" onclick="go('reposicao')"><span class="ico">↺</span> Reposição Quinzenal</div>
+    <div class="nav-sec">Vendas</div>
+    <div class="nav-item" onclick="go('substituicoes')"><span class="ico">⇄</span> Substituições</div>
+    <div class="nav-item" onclick="go('harmonizacao')"><span class="ico">✦</span> Harmonização</div>
+    <div class="nav-sec">Gestão</div>
+    <div class="nav-item sommelier-only" id="nav-import" onclick="go('import')"><span class="ico">↑</span> Importar XLS</div>
+    <div class="nav-item" onclick="go('tacas')"><span class="ico">◑</span> Gestão de Taças</div>
+    <div class="nav-item" onclick="go('carta')"><span class="ico">📋</span> Carta de Vinhos</div>
+    <div class="nav-item sommelier-only" id="nav-kpis" onclick="go('kpis')"><span class="ico">◎</span> KPIs & Metas</div>
+    <div class="nav-item sommelier-only" id="nav-garcons" onclick="go('garcons')"><span class="ico">🏆</span> Campeonato</div>
+    <div class="nav-item" onclick="goLogout()"><span class="ico" style="color:rgba(255,255,255,.35)">⏻</span> <span style="color:rgba(255,255,255,.35)">Sair</span></div>
+  </nav>
+  <div class="s-footer">
+    <div class="s-user" id="s-user-name">—</div>
+    Base: Jan–Mai 2026<br>
+    <span id="cache-ind" style="color:rgba(184,148,63,.7)">💾 Auto-save ativo</span>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-meta">
+      <span id="tb-date"></span>
+      <span class="role-badge" id="tb-role">—</span>
+      <span class="badge-live">Sistema Ativo</span>
+      <span class="sync-badge sb-saving" id="tb-sync">…</span>
+    </div>
+  </div>
+  <div class="content">
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <div class="view active" id="view-dashboard">
+    <div class="kpi-grid">
+      <div class="kpi-card c-navy"><div class="kpi-val">153</div><div class="kpi-lbl">SKUs Ativos</div><div class="kpi-hint">18 Classe A</div></div>
+      <div class="kpi-card c-red"><div class="kpi-val" id="kv-rupt">0</div><div class="kpi-lbl">Rupturas Agora</div><div class="kpi-hint">preencha o estoque</div></div>
+      <div class="kpi-card c-gold"><div class="kpi-val">42</div><div class="kpi-lbl">Gfa Equiv./Dia</div><div class="kpi-hint">~31.7 litros</div></div>
+      <div class="kpi-card c-amber"><div class="kpi-val">9</div><div class="kpi-lbl">TC p/ Remover</div><div class="kpi-hint">da carta</div></div>
+      <div class="kpi-card c-green"><div class="kpi-val" id="kv-ticket">165</div><div class="kpi-lbl">Ticket Médio</div><div class="kpi-hint">R$/mesa · Mai/26</div></div>
+      <div class="kpi-card c-navy"><div class="kpi-val" id="kv-garrafa">72%</div><div class="kpi-lbl">Taxa Garrafa</div><div class="kpi-hint">meta: 80%</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div>
+        <div class="alert alert-red"><div class="alert-ico">🔴</div><div><div class="alert-title">Bernardi Jacur: canibalização TC↑</div><div class="alert-body">Proporção TC cresceu 63%→79% em maio. 9 novos itens TC adicionados contra a estratégia.</div></div></div>
+        <div class="alert alert-amber"><div class="alert-ico">⚠️</div><div><div class="alert-title">Funil → Garrafa: 5 itens TC ativos</div><div class="alert-body">Bernardi Jacur, Cannonau, Alamos, Bueno Pinot Noir, Concha y Toro. Ver Gestão de Taças.</div></div></div>
+      </div>
+      <div>
+        <div class="alert alert-amber"><div class="alert-ico">📋</div><div><div class="alert-title">Nova Carta em preparação</div><div class="alert-body">Itens "Em Revisão" visíveis na aba Carta de Vinhos. Substituições podem ser configuradas antes da publicação.</div></div></div>
+        <div class="alert alert-green"><div class="alert-ico">🏆</div><div><div class="alert-title">Campeonato de Garçons ativo</div><div class="alert-body">Ticket médio (40%) · Taxa garrafa (30%) · Receita (20%) · 2ª garrafa (10%)</div></div></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px">
+      <div class="chart-card"><div class="chart-title">Top 10 por Volume (Jan–Mai 2026)</div><div class="bar-chart" id="top10-chart"></div></div>
+      <div class="chart-card"><div class="chart-title">Tendência Garrafa vs Taça</div><div id="tc-trend-chart"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ CONTROLE DIÁRIO ═══ -->
+  <div class="view" id="view-controle">
+    <div class="sec-hdr">
+      <div><div class="sec-title">Controle Diário — Adega do Andar</div><div class="sec-desc">Verde = OK · Amarelo = Atenção · Vermelho = Repor agora</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="resetEstoque()">↺ Resetar</button>
+        <button class="btn btn-gold" onclick="exportDiario()">↓ Exportar</button>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <div class="search-box"><input type="text" placeholder="Buscar vinho..." id="srch-ctrl" oninput="renderControle()"></div>
+      <button class="fb on" onclick="setFilterCtrl('all',this)">Todos</button>
+      <button class="fb" onclick="setFilterCtrl('A',this)">Classe A</button>
+      <button class="fb" onclick="setFilterCtrl('B',this)">Classe B</button>
+      <button class="fb" onclick="setFilterCtrl('crit',this)">🔴 Críticos</button>
+    </div>
+    <div class="daily-grid" id="daily-cards"></div>
+  </div>
+
+  <!-- ═══ PAIR STOCK ═══ -->
+  <div class="view" id="view-pairstock">
+    <div class="sec-hdr">
+      <div><div class="sec-title">Pair Stock — Tabela Completa</div><div class="sec-desc">Cons/Dia = Total 5M ÷ 150d · PS = ⌈Cons×1,3⌉ · Mín = PS×2 · Quin = ⌈Cons×15×1,2⌉</div></div>
+    </div>
+    <div class="filter-bar">
+      <div class="search-box"><input type="text" placeholder="Vinho ou código..." id="srch-ps" oninput="renderPS()"></div>
+      <button class="fb on" onclick="setFilterPS('all',this)">Todos</button>
+      <button class="fb" onclick="setFilterPS('A',this)">A</button>
+      <button class="fb" onclick="setFilterPS('B',this)">B</button>
+      <button class="fb" onclick="setFilterPS('C',this)">C</button>
+      <button class="fb" onclick="setFilterPS('375ml',this)">½ Gfa</button>
+      <button class="fb" onclick="setFilterPS('em_revisao',this)">Em Revisão</button>
+    </div>
+    <div class="tw tc-wrap"><table id="ps-table">
+      <thead><tr><th>#</th><th>Cód.</th><th>Vinho</th><th>Fmt</th><th>Cl.</th><th>Status</th><th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Tend.</th><th>Total</th><th>Cons/Dia</th><th>Pair Stock</th><th>Est.Mín</th><th>Repos.Quin</th><th>Estoque</th><th>Situação</th></tr></thead>
+      <tbody id="ps-body"></tbody>
+    </table></div>
+  </div>
+
+  <!-- ═══ REPOSIÇÃO ═══ -->
+  <div class="view" id="view-reposicao">
+    <div class="sec-hdr">
+      <div><div class="sec-title">Reposição Quinzenal — Almoxarifado (−2)</div><div class="sec-desc">Preencha o estoque atual. O sistema calcula o pedido automaticamente.</div></div>
+      <button class="btn btn-primary btn-sm" onclick="gerarPedido()">📋 TXT</button>
+      <button class="btn-xls btn btn-sm" onclick="xlsExportPedido()">📊 XLS Pedido</button>
+      <button class="btn-xls btn btn-sm" onclick="xlsExportRequisicao()">📊 XLS Requisição</button>
+    </div>
+    <div class="repos-summary">
+      <div class="repos-card"><div class="repos-num" id="rp-itens">—</div><div class="repos-lbl">Itens para Pedir</div></div>
+      <div class="repos-card"><div class="repos-num" id="rp-gfa">—</div><div class="repos-lbl">Garrafas no Pedido</div></div>
+      <div class="repos-card"><div class="repos-num" id="rp-urg">—</div><div class="repos-lbl">Urgentes (Classe A)</div></div>
+    </div>
+    <div class="tw tc-wrap"><table>
+      <thead><tr><th>#</th><th>Cód.</th><th>Vinho</th><th>Cl.</th><th>Repos.Quinzenal</th><th>Estoque Almox.</th><th>Pedido Necessário</th><th>Status</th></tr></thead>
+      <tbody id="repos-body"></tbody>
+    </table></div>
+  </div>
+
+  <!-- ═══ SUBSTITUIÇÕES ═══ -->
+  <div class="view" id="view-substituicoes">
+    <div class="sec-hdr">
+      <div><div class="sec-title">Substituições & Upselling</div><div class="sec-desc">Na falta de A → ofereça B · Para upsell de X → sugira Y</div></div>
+      <button class="btn btn-gold sommelier-only visible" onclick="openSubModal()">+ Nova Regra</button>
+    </div>
+    <div class="filter-bar">
+      <button class="fb on" onclick="setFilterSub('all',this)">Todas</button>
+      <button class="fb" onclick="setFilterSub('falta',this)">🔴 Na Falta De</button>
+      <button class="fb" onclick="setFilterSub('upsell',this)">🟡 Upselling</button>
+      <button class="fb" onclick="setFilterSub('harmonizacao',this)">🟢 Harmonização</button>
+    </div>
+    <div id="subs-list"></div>
+  </div>
+
+  <!-- ═══ HARMONIZAÇÃO ═══ -->
+  <div class="view" id="view-harmonizacao">
+    <div class="sec-hdr">
+      <div><div class="sec-title">Matriz de Harmonização</div><div class="sec-desc">Referência de serviço e argumentação de vendas para a equipe</div></div>
+    </div>
+    <div class="harm-grid" id="harm-grid"></div>
+  </div>
+
+  <!-- ═══ IMPORTAR XLS ═══ -->
+  <div class="view" id="view-import">
+    <div class="sec-hdr"><div><div class="sec-title">Importar XLS do ERP</div><div class="sec-desc">Arquivo gerado pelo ERP do Terraço Itália — formato padrão mensal</div></div></div>
+    <div class="alert alert-amber"><div class="alert-ico">ℹ️</div><div><div class="alert-title">Formato esperado</div><div class="alert-body">Colunas: DESCRIÇÃO · LT · Jan · Fev · Mar · Abr · Mai · Jun · Jul · Ago · Set · Out · Nov · Dez · Total · Media_dia<br>Linhas com LT inválido ou nome não reconhecido vão para revisão manual.</div></div></div>
+    <div class="import-zone" id="import-zone" onclick="document.getElementById('file-inp').click()" ondragover="dragOver(event)" ondrop="dropFile(event)" ondragleave="dragLeave(event)">
+      <div class="import-icon">📊</div>
+      <div class="import-title">Arraste o XLS aqui ou clique para selecionar</div>
+      <div class="import-desc">Arquivo .xlsx ou .xls gerado pelo ERP</div>
+      <input type="file" id="file-inp" accept=".xlsx,.xls" style="display:none" onchange="handleFile(this)">
+    </div>
+    <div class="import-log" id="import-log" style="display:none"></div>
+    <div class="import-review" id="import-review" style="display:none">
+      <div class="sec-hdr" style="margin-bottom:10px"><div><div class="sec-title" style="font-size:16px">Itens para Revisão Manual</div><div class="sec-desc">Nomes do ERP que não foram identificados automaticamente</div></div></div>
+      <div id="review-list"></div>
+    </div>
+  </div>
+
+  <!-- ═══ GESTÃO DE TAÇAS ═══ -->
+  <div class="view" id="view-tacas">
+    <div class="sec-hdr">
+      <div><div class="sec-title">Gestão Estratégica de Taças</div><div class="sec-desc">Meta: máx. 8 TC · Congelar novas entradas · Taça como funil para garrafa</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px" id="tc-kpis"></div>
+    <div class="filter-bar">
+      <button class="fb on" onclick="setFilterTC('all',this)">Todos</button>
+      <button class="fb" onclick="setFilterTC('REMOVER',this)">🔴 Remover</button>
+      <button class="fb" onclick="setFilterTC('FUNIL',this)">🟡 Funil</button>
+      <button class="fb" onclick="setFilterTC('REVISAR',this)">🟠 Revisar</button>
+      <button class="fb" onclick="setFilterTC('MANTER',this)">🟢 Manter</button>
+    </div>
+    <div class="tw tc-wrap"><table>
+      <thead><tr><th>Vinho (Taça)</th><th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Total</th><th>Tendência</th><th>Gfa?</th><th>Novo Mai.</th><th>Ação</th></tr></thead>
+      <tbody id="tc-body"></tbody>
+    </table></div>
+  </div>
+
+  <!-- ═══ CARTA DE VINHOS ═══ -->
+  <div class="view" id="view-carta">
+    <div class="sec-hdr">
+      <div><div class="sec-title">Carta de Vinhos</div><div class="sec-desc">Gerencie status dos rótulos · Adicione vinhos da nova carta · Controle revisão</div></div>
+      <button class="btn btn-gold sommelier-only visible" onclick="openWineModal(null)">+ Novo Rótulo</button>
+    </div>
+    <div class="filter-bar">
+      <div class="search-box"><input type="text" placeholder="Buscar..." id="srch-carta" oninput="renderCarta()"></div>
+      <button class="fb on" onclick="setFilterCarta('all',this)">Todos</button>
+      <button class="fb" onclick="setFilterCarta('ativo',this)">✓ Ativo</button>
+      <button class="fb" onclick="setFilterCarta('em_revisao',this)">⏳ Em Revisão</button>
+      <button class="fb" onclick="setFilterCarta('inativo',this)">✗ Inativo</button>
+      <button class="fb" onclick="setFilterCarta('tinto',this)">🍷 Tinto</button>
+      <button class="fb" onclick="setFilterCarta('branco',this)">🥂 Branco</button>
+      <button class="fb" onclick="setFilterCarta('espumante',this)">✨ Espumante</button>
+    </div>
+    <div class="carta-grid" id="carta-grid"></div>
+  </div>
+
+  <!-- ═══ KPIs ═══ -->
+  <div class="view" id="view-kpis">
+    <div class="sec-hdr"><div><div class="sec-title">KPIs & Metas</div><div class="sec-desc">Insira os valores reais do período para calcular os indicadores</div></div></div>
+    <div class="kpi-inp-grid" id="kpi-inp-grid"></div>
+  </div>
+
+  <!-- ═══ CAMPEONATO ═══ -->
+  <div class="view" id="view-garcons">
+    <div class="sec-hdr">
+      <div><div class="sec-title">Campeonato de Garçons</div><div class="sec-desc">Ranking por ticket médio · taxa garrafa · receita · 2ª garrafa</div></div>
+      <button class="btn btn-gold" onclick="openGarconModal()">+ Registrar Resultado</button>
+    </div>
+    <div id="garcons-ranking"></div>
+  </div>
+
+  </div><!-- /content -->
+</main>
+</div><!-- /layout -->
+
+<!-- MODAL SUBSTITUIÇÃO -->
+<div class="modal-bg" id="sub-modal" style="display:none" onclick="closeSubModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Nova Regra de Substituição</div>
+    <div class="modal-sub">Defina quando oferecer um vinho alternativo ou fazer upsell</div>
+    <div class="form-row"><label class="form-label">Tipo de Regra</label>
+      <select class="form-sel" id="sub-tipo">
+        <option value="falta">Na Falta De (substituto)</option>
+        <option value="upsell">Upselling (upgrade de valor)</option>
+        <option value="harmonizacao">Harmonização com Prato</option>
+      </select>
+    </div>
+    <div class="form-row"><label class="form-label">Vinho de Origem (A / X)</label>
+      <select class="form-sel" id="sub-origem"></select>
+    </div>
+    <div class="form-row"><label class="form-label">Vinho Destino (B / Y)</label>
+      <select class="form-sel" id="sub-destino"></select>
+    </div>
+    <div class="form-row"><label class="form-label">Prioridade</label>
+      <select class="form-sel" id="sub-prio">
+        <option value="1">1 — Primeira opção</option>
+        <option value="2">2 — Segunda opção</option>
+        <option value="3">3 — Terceira opção</option>
+      </select>
+    </div>
+    <div class="form-row"><label class="form-label">Argumento de Venda</label>
+      <textarea class="form-textarea" id="sub-motivo" placeholder="Ex: O Alamos é produzido pela mesma família — este é o topo de linha deles"></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeSubModal()">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveSub()">Salvar Regra</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VINHO (CARTA) -->
+<div class="modal-bg" id="wine-modal" style="display:none" onclick="closeWineModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="wm-title">Novo Rótulo</div>
+    <div class="modal-sub">Cadastre um vinho na carta — sem histórico ERP até a próxima importação</div>
+    <div class="form-row"><label class="form-label">Nome Completo</label><input class="form-inp" id="wm-nome" placeholder="Ex: BAROLO DOCG - GIACOMO CONTERNO 750ML"></div>
+    <div class="form-grid">
+      <div class="form-row"><label class="form-label">Código ERP</label><input class="form-inp" id="wm-cod" type="number" placeholder="Opcional"></div>
+      <div class="form-row"><label class="form-label">Formato</label>
+        <select class="form-sel" id="wm-formato"><option value="750ml">750ml</option><option value="375ml">375ml (1/2)</option><option value="Magnum">Magnum (1.5L)</option></select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label class="form-label">Tipo</label>
+        <select class="form-sel" id="wm-tipo"><option value="tinto">Tinto</option><option value="branco">Branco</option><option value="rose">Rosé</option><option value="espumante">Espumante</option><option value="sobremesa">Sobremesa</option><option value="taca">Taça (TC)</option></select>
+      </div>
+      <div class="form-row"><label class="form-label">Status</label>
+        <select class="form-sel" id="wm-status"><option value="em_revisao">Em Revisão (nova carta)</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="suspenso">Suspenso</option></select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label class="form-label">Preço de Custo (R$)</label><input class="form-inp" id="wm-custo" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="form-row"><label class="form-label">Preço de Venda (R$)</label><input class="form-inp" id="wm-venda" type="number" step="0.01" placeholder="0.00"></div>
+    </div>
+    <div class="form-row"><label class="form-label">Pair Stock inicial (estimativa)</label><input class="form-inp" id="wm-ps" type="number" placeholder="Será recalculado após importação ERP"></div>
+    <div class="form-row"><label class="form-label">Notas de Serviço</label><textarea class="form-textarea" id="wm-notas" placeholder="Temperatura ideal, observações de abertura, características de venda..."></textarea></div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeWineModal()">Cancelar</button>
+      <button class="btn btn-red btn-sm" id="wm-del" onclick="deleteWine()" style="display:none">Remover</button>
+      <button class="btn btn-gold" onclick="saveWine()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL GARÇOM -->
+<div class="modal-bg" id="garcon-modal" style="display:none" onclick="closeGarconModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Registrar Resultado de Garçom</div>
+    <div class="modal-sub">Informe os dados do período para calcular o ranking</div>
+    <div class="form-row"><label class="form-label">Nome do Garçom</label><input class="form-inp" id="gm-nome" placeholder="Nome completo"></div>
+    <div class="form-grid">
+      <div class="form-row"><label class="form-label">Período</label><input class="form-inp" id="gm-periodo" placeholder="Ex: Jun/2026"></div>
+      <div class="form-row"><label class="form-label">Mesas Atendidas</label><input class="form-inp" id="gm-mesas" type="number"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label class="form-label">Receita de Vinho (R$)</label><input class="form-inp" id="gm-receita" type="number" step="0.01"></div>
+      <div class="form-row"><label class="form-label">Mesas com Garrafa</label><input class="form-inp" id="gm-com-gfa" type="number"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label class="form-label">Mesas com 2+ Garrafas</label><input class="form-inp" id="gm-duas-gfa" type="number"></div>
+      <div class="form-row"><label class="form-label">Mesas com Vinho</label><input class="form-inp" id="gm-com-vinho" type="number"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeGarconModal()">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveGarcon()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const APP = {"wines":[{"id":1,"cod":16552,"nome":"BERNARDI JACUR BRUT 750ML","formato":"750ml","tipo":"espumante","abc":"A","status":"ativo","qtde_5m":2408,"cons_dia":16.053,"pair_stock":21,"est_min":42,"repos_quinzenal":289,"monthly":[47,31,54,43,63],"preco_custo":0,"preco_venda":0},{"id":2,"cod":17301,"nome":"CANNONAU DOC - CAPOCACCIA  DEIL NURAGHI - TINTO 750 ML","formato":"750ml","tipo":"tinto","abc":"A","status":"ativo","qtde_5m":971,"cons_dia":6.473,"pair_stock":9,"est_min":18,"repos_quinzenal":117,"monthly":[68,68,111,97,95],"preco_custo":0,"preco_venda":0},{"id":3,"cod":17453,"nome":"VINHO TINTO - GASTRONOMIA","formato":"750ml","tipo":"tinto","abc":"A","status":"ativo","qtde_5m":586,"cons_dia":3.907,"pair_stock":6,"est_min":12,"repos_quinzenal":71,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":4,"cod":8814,"nome":"BARONE MONTALTO PINOT GRIGIO 750 ML","formato":"750ml","tipo":"branco","abc":"A","status":"ativo","qtde_5m":547,"cons_dia":3.647,"pair_stock":5,"est_min":10,"repos_quinzenal":66,"monthly":[45,36,39,51,41],"preco_custo":0,"preco_venda":0},{"id":5,"cod":17338,"nome":"1/2 CARMEN INSIGNE CABERNET SAUVIGNON 375 ML","formato":"375ml","tipo":"tinto","abc":"A","status":"ativo","qtde_5m":396,"cons_dia":2.64,"pair_stock":4,"est_min":8,"repos_quinzenal":48,"monthly":[63,48,92,17,127],"preco_custo":0,"preco_venda":0},{"id":6,"cod":14948,"nome":"1/2 LUIZ ARGENTA CABERNET SAUVINGNON 375 ML","formato":"375ml","tipo":"tinto","abc":"A","status":"ativo","qtde_5m":366,"cons_dia":2.44,"pair_stock":4,"est_min":8,"repos_quinzenal":44,"monthly":[44,80,40,116,94],"preco_custo":0,"preco_venda":0},{"id":7,"cod":826,"nome":"CATENA ZAPATA CATENA MALBEC - 750 ML","formato":"750ml","tipo":"tinto","abc":"A","status":"ativo","qtde_5m":346,"cons_dia":2.307,"pair_stock":3,"est_min":6,"repos_quinzenal":42,"monthly":[30,16,34,33,37],"preco_custo":0,"preco_venda":0},{"id":8,"cod":17336,"nome":"1/2 CARMEN INIGNE SAUVIGNON BLANC - 375ML","formato":"375ml","tipo":"branco","abc":"A","status":"ativo","qtde_5m":277,"cons_dia":1.847,"pair_stock":3,"est_min":6,"repos_quinzenal":34,"monthly":[32,42,42,84,72],"preco_custo":0,"preco_venda":0},{"id":9,"cod":17481,"nome":"VINHO BRANCO/ESPUMANTE - GASTRONOMIA","formato":"750ml","tipo":"espumante","abc":"A","status":"ativo","qtde_5m":240,"cons_dia":1.6,"pair_stock":3,"est_min":6,"repos_quinzenal":29,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":10,"cod":1823,"nome":"CHANDON PASSION  750 ML","formato":"750ml","tipo":"espumante","abc":"A","status":"ativo","qtde_5m":198,"cons_dia":1.32,"pair_stock":2,"est_min":4,"repos_quinzenal":24,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":11,"cod":17339,"nome":"1/2 CATENA ZAPATA CATENA MALBEC 375 ML","formato":"375ml","tipo":"tinto","abc":"A","status":"ativo","qtde_5m":180,"cons_dia":1.2,"pair_stock":2,"est_min":4,"repos_quinzenal":22,"monthly":[30,16,34,33,37],"preco_custo":0,"preco_venda":0},{"id":12,"cod":2257,"nome":"ALAMOS MALBEC - CATENA ZAPATA - 750 ML","formato":"750ml","tipo":"tinto","abc":"A","status":"ativo","qtde_5m":156,"cons_dia":1.04,"pair_stock":2,"est_min":4,"repos_quinzenal":19,"monthly":[22,30,56,28,6],"preco_custo":0,"preco_venda":0},{"id":13,"cod":15914,"nome":"1/2 PIZZATO MERLOT 375 ML","formato":"375ml","tipo":"tinto","abc":"A","status":"ativo","qtde_5m":144,"cons_dia":0.96,"pair_stock":2,"est_min":4,"repos_quinzenal":18,"monthly":[45,41,20,48,21],"preco_custo":0,"preco_venda":0},{"id":14,"cod":820,"nome":"CATENA ZAPATA CATENA - CHARDONNAY 750 ML","formato":"750ml","tipo":"branco","abc":"A","status":"ativo","qtde_5m":144,"cons_dia":0.96,"pair_stock":2,"est_min":4,"repos_quinzenal":18,"monthly":[26,26,27,39,30],"preco_custo":0,"preco_venda":0},{"id":15,"cod":1006,"nome":"CHANDON BRUT ROSE 750 ML","formato":"750ml","tipo":"espumante","abc":"A","status":"ativo","qtde_5m":132,"cons_dia":0.88,"pair_stock":2,"est_min":4,"repos_quinzenal":16,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":16,"cod":1005,"nome":"CHANDON RESERVE BRUT 750 ML","formato":"750ml","tipo":"espumante","abc":"A","status":"ativo","qtde_5m":132,"cons_dia":0.88,"pair_stock":2,"est_min":4,"repos_quinzenal":16,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":17,"cod":17839,"nome":"ALMA NEGRA M BLEND 750 ML","formato":"750ml","tipo":"tinto","abc":"A","status":"ativo","qtde_5m":126,"cons_dia":0.84,"pair_stock":2,"est_min":4,"repos_quinzenal":16,"monthly":[37,22,10,23,37],"preco_custo":0,"preco_venda":0},{"id":18,"cod":17441,"nome":"CANTINE DI ORA AMICALE ROSSO - 750 ML","formato":"750ml","tipo":"tinto","abc":"A","status":"ativo","qtde_5m":120,"cons_dia":0.8,"pair_stock":2,"est_min":4,"repos_quinzenal":15,"monthly":[7,6,18,14,18],"preco_custo":0,"preco_venda":0},{"id":19,"cod":4774,"nome":"TAITTINGER BRUT 750 ML","formato":"750ml","tipo":"espumante","abc":"B","status":"ativo","qtde_5m":120,"cons_dia":0.8,"pair_stock":2,"est_min":4,"repos_quinzenal":15,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":20,"cod":15620,"nome":"BOTTEGA PETALO MOSCATO 750 ML","formato":"750ml","tipo":"espumante","abc":"B","status":"ativo","qtde_5m":114,"cons_dia":0.76,"pair_stock":1,"est_min":2,"repos_quinzenal":14,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":21,"cod":9468,"nome":"DI LENARDO PINOT GRIGIO 750ML","formato":"750ml","tipo":"branco","abc":"B","status":"ativo","qtde_5m":114,"cons_dia":0.76,"pair_stock":1,"est_min":2,"repos_quinzenal":14,"monthly":[6,17,10,1,5],"preco_custo":0,"preco_venda":0},{"id":22,"cod":16856,"nome":"JACOPO BIONDI SANTI BRACCALE - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":102,"cons_dia":0.68,"pair_stock":1,"est_min":2,"repos_quinzenal":13,"monthly":[1,0,9,7,6],"preco_custo":0,"preco_venda":0},{"id":23,"cod":15912,"nome":"1/2 PIZZATO CHARDONNAY 375 ML.","formato":"375ml","tipo":"branco","abc":"B","status":"ativo","qtde_5m":96,"cons_dia":0.64,"pair_stock":1,"est_min":2,"repos_quinzenal":12,"monthly":[27,41,37,37,23],"preco_custo":0,"preco_venda":0},{"id":24,"cod":16665,"nome":"ESPUMANTE VALLOTANO MOSCATEL 750ML","formato":"750ml","tipo":"espumante","abc":"B","status":"ativo","qtde_5m":96,"cons_dia":0.64,"pair_stock":1,"est_min":2,"repos_quinzenal":12,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":25,"cod":15221,"nome":"D.V CATENA CABERNET SAUVIGNON MALBEC - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":85,"cons_dia":0.567,"pair_stock":1,"est_min":2,"repos_quinzenal":11,"monthly":[8,48,111,34,12],"preco_custo":0,"preco_venda":0},{"id":26,"cod":17337,"nome":"1/2 CATENA ZAPATA CHARDONNAY 375 ML","formato":"375ml","tipo":"branco","abc":"B","status":"ativo","qtde_5m":84,"cons_dia":0.56,"pair_stock":1,"est_min":2,"repos_quinzenal":11,"monthly":[18,20,22,16,21],"preco_custo":0,"preco_venda":0},{"id":27,"cod":14336,"nome":"CASTELLO BANFI CENTINE TOSCANA TINTO - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":78,"cons_dia":0.52,"pair_stock":1,"est_min":2,"repos_quinzenal":10,"monthly":[14,8,9,29,28],"preco_custo":0,"preco_venda":0},{"id":28,"cod":2066,"nome":"EMILIANA NOVAS GRAN RESERVA CARMENÉRE/CABERNET SAUVIGNON - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":73,"cons_dia":0.487,"pair_stock":1,"est_min":2,"repos_quinzenal":9,"monthly":[15,12,10,16,23],"preco_custo":0,"preco_venda":0},{"id":29,"cod":1085,"nome":"JACOPO BIONDI SANTI SASSOALLORO - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":72,"cons_dia":0.48,"pair_stock":1,"est_min":2,"repos_quinzenal":9,"monthly":[2,1,1,2,1],"preco_custo":0,"preco_venda":0},{"id":30,"cod":14630,"nome":"BORGONE TOSCANA ROSSO IGT 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":66,"cons_dia":0.44,"pair_stock":1,"est_min":2,"repos_quinzenal":8,"monthly":[6,4,4,18,36],"preco_custo":0,"preco_venda":0},{"id":31,"cod":17897,"nome":"LUIGI BOSCA - MALBEC - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":60,"cons_dia":0.4,"pair_stock":1,"est_min":2,"repos_quinzenal":8,"monthly":[14,15,14,14,16],"preco_custo":0,"preco_venda":0},{"id":32,"cod":17902,"nome":"NORTON MALBEC DOC - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":60,"cons_dia":0.4,"pair_stock":1,"est_min":2,"repos_quinzenal":8,"monthly":[6,14,2,13,12],"preco_custo":0,"preco_venda":0},{"id":33,"cod":8681,"nome":"VINOSIA DAL 1947 TERRE DI SAN VICENZO PRIMITIVO DI MANDURIA - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":60,"cons_dia":0.4,"pair_stock":1,"est_min":2,"repos_quinzenal":8,"monthly":[4,5,6,9,19],"preco_custo":0,"preco_venda":0},{"id":34,"cod":14878,"nome":"DON AMERIGO RESERVA CABERNET SAUVINGNON 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":54,"cons_dia":0.36,"pair_stock":1,"est_min":2,"repos_quinzenal":7,"monthly":[4,2,1,6,1],"preco_custo":0,"preco_venda":0},{"id":35,"cod":15908,"nome":"BUENO BELLAVISTA ESTATE SAUVIGNON BLANC - 750ML - N/C","formato":"750ml","tipo":"branco","abc":"B","status":"ativo","qtde_5m":50,"cons_dia":0.333,"pair_stock":1,"est_min":2,"repos_quinzenal":6,"monthly":[6,3,4,1,0],"preco_custo":0,"preco_venda":0},{"id":36,"cod":1007,"nome":"CAVE GEISSE BRUT 750 ML","formato":"750ml","tipo":"espumante","abc":"B","status":"ativo","qtde_5m":48,"cons_dia":0.32,"pair_stock":1,"est_min":2,"repos_quinzenal":6,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":37,"cod":17759,"nome":"COBOS FELINO CABERNET SAUVIGNON - 750ML N/C","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":48,"cons_dia":0.32,"pair_stock":1,"est_min":2,"repos_quinzenal":6,"monthly":[3,0,0,4,10],"preco_custo":0,"preco_venda":0},{"id":38,"cod":15312,"nome":"GARZON ESTATE PINOT NOIR ROSE 750 ML","formato":"750ml","tipo":"rose","abc":"B","status":"ativo","qtde_5m":48,"cons_dia":0.32,"pair_stock":1,"est_min":2,"repos_quinzenal":6,"monthly":[10,10,13,14,10],"preco_custo":0,"preco_venda":0},{"id":39,"cod":18056,"nome":"VILLA ANTINORI ROSSO TOSCANA IGT 750ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":48,"cons_dia":0.32,"pair_stock":1,"est_min":2,"repos_quinzenal":6,"monthly":[45,18,75,23,28],"preco_custo":0,"preco_venda":0},{"id":40,"cod":17442,"nome":"BRUNILDE DI MENZIONE AGLIANICO DEL VULTURE - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":42,"cons_dia":0.28,"pair_stock":1,"est_min":2,"repos_quinzenal":6,"monthly":[16,18,5,8,17],"preco_custo":0,"preco_venda":0},{"id":41,"cod":17440,"nome":"LE ANFORE ROSSO SALENTO IGT - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":42,"cons_dia":0.28,"pair_stock":1,"est_min":2,"repos_quinzenal":6,"monthly":[3,4,7,21,42],"preco_custo":0,"preco_venda":0},{"id":42,"cod":1118,"nome":"PERRIN LA VIEILLE FERME ROSE - 750ML","formato":"750ml","tipo":"rose","abc":"B","status":"ativo","qtde_5m":42,"cons_dia":0.28,"pair_stock":1,"est_min":2,"repos_quinzenal":6,"monthly":[3,12,3,6,2],"preco_custo":0,"preco_venda":0},{"id":43,"cod":15394,"nome":"SCHIOPETTO SAUVINGNON COLLIO - 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":42,"cons_dia":0.28,"pair_stock":1,"est_min":2,"repos_quinzenal":6,"monthly":[0,0,0,1,4],"preco_custo":0,"preco_venda":0},{"id":44,"cod":15884,"nome":"1/2  CASTELLO BANFI ROSSO DI MONTALCINO 375 ML","formato":"375ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":36,"cons_dia":0.24,"pair_stock":1,"est_min":2,"repos_quinzenal":5,"monthly":[5,0,8,9,9],"preco_custo":0,"preco_venda":0},{"id":45,"cod":17970,"nome":"BUENO RESERVA PINOT NOIR - 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":36,"cons_dia":0.24,"pair_stock":1,"est_min":2,"repos_quinzenal":5,"monthly":[25,22,23,20,15],"preco_custo":0,"preco_venda":0},{"id":46,"cod":1013,"nome":"CHATEAU BEL AIR 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":36,"cons_dia":0.24,"pair_stock":1,"est_min":2,"repos_quinzenal":5,"monthly":[12,13,3,4,11],"preco_custo":0,"preco_venda":0},{"id":47,"cod":2132,"nome":"PERRIN LA VIEILLE FERME ROUGE - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":36,"cons_dia":0.24,"pair_stock":1,"est_min":2,"repos_quinzenal":5,"monthly":[3,12,3,6,2],"preco_custo":0,"preco_venda":0},{"id":48,"cod":10156,"nome":"PIZZATO RESERVA MERLOT 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":36,"cons_dia":0.24,"pair_stock":1,"est_min":2,"repos_quinzenal":5,"monthly":[7,6,9,14,4],"preco_custo":0,"preco_venda":0},{"id":49,"cod":16910,"nome":"RAR CABERNET SAUVIGNON/ MERLOT LAUREA - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":36,"cons_dia":0.24,"pair_stock":1,"est_min":2,"repos_quinzenal":5,"monthly":[5,6,2,6,12],"preco_custo":0,"preco_venda":0},{"id":50,"cod":16654,"nome":"RAR MASI PINOT GRIGIO TORRONTES 750 ML - N/C","formato":"750ml","tipo":"branco","abc":"B","status":"ativo","qtde_5m":36,"cons_dia":0.24,"pair_stock":1,"est_min":2,"repos_quinzenal":5,"monthly":[8,5,4,9,10],"preco_custo":0,"preco_venda":0},{"id":51,"cod":10995,"nome":"TERRAZAS RESERVA CHARDONNAY 750ML (BAILE CARNAVAL)","formato":"750ml","tipo":"branco","abc":"B","status":"ativo","qtde_5m":36,"cons_dia":0.24,"pair_stock":1,"est_min":2,"repos_quinzenal":5,"monthly":[0,0,0,0,1],"preco_custo":0,"preco_venda":0},{"id":52,"cod":18055,"nome":"VILLA ANTINORI BIANCO TOSCANA IGT 750ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":36,"cons_dia":0.24,"pair_stock":1,"est_min":2,"repos_quinzenal":5,"monthly":[22,19,70,15,11],"preco_custo":0,"preco_venda":0},{"id":53,"cod":16372,"nome":"BOSIO BARBERA D' ALBA EGIDIO BARRIQUE DOC - 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":31,"cons_dia":0.207,"pair_stock":1,"est_min":2,"repos_quinzenal":4,"monthly":[2,1,3,5,16],"preco_custo":0,"preco_venda":0},{"id":54,"cod":883,"nome":"GARCES SILVA AMAYNA SAUVIGNON BLANC 750 ML","formato":"750ml","tipo":"branco","abc":"B","status":"ativo","qtde_5m":30,"cons_dia":0.2,"pair_stock":1,"est_min":2,"repos_quinzenal":4,"monthly":[2,4,3,5,6],"preco_custo":0,"preco_venda":0},{"id":55,"cod":16801,"nome":"GARZON RESERVA TANNAT -750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":30,"cons_dia":0.2,"pair_stock":1,"est_min":2,"repos_quinzenal":4,"monthly":[6,6,1,12,10],"preco_custo":0,"preco_venda":0},{"id":56,"cod":10812,"nome":"GOICHOT FRERES BOURGOGNE PINOT NOIR 750 ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":30,"cons_dia":0.2,"pair_stock":1,"est_min":2,"repos_quinzenal":4,"monthly":[1,6,2,1,0],"preco_custo":0,"preco_venda":0},{"id":57,"cod":14307,"nome":"GRECO DI TUFO DOCG 750 ML","formato":"750ml","tipo":"branco","abc":"B","status":"ativo","qtde_5m":30,"cons_dia":0.2,"pair_stock":1,"est_min":2,"repos_quinzenal":4,"monthly":[0,5,2,2,1],"preco_custo":0,"preco_venda":0},{"id":58,"cod":12877,"nome":"LEYDA RESERVA PINOT NOIR - 750ML","formato":"750ml","tipo":"tinto","abc":"B","status":"ativo","qtde_5m":30,"cons_dia":0.2,"pair_stock":1,"est_min":2,"repos_quinzenal":4,"monthly":[3,3,9,6,8],"preco_custo":0,"preco_venda":0},{"id":59,"cod":15505,"nome":"PLANETA CERASUOLO DI VITTORIA DOCG - 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":25,"cons_dia":0.167,"pair_stock":1,"est_min":2,"repos_quinzenal":4,"monthly":[1,0,0,2,3],"preco_custo":0,"preco_venda":0},{"id":60,"cod":822,"nome":"ANGELICA ZAPATA MALBEC - CATENA ZAPATA -  750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":24,"cons_dia":0.16,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[1,2,5,2,8],"preco_custo":0,"preco_venda":0},{"id":61,"cod":13392,"nome":"CONCHA Y TORO MARQUES DE CASA CONCHA CABERNET SAUVIGNON - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":24,"cons_dia":0.16,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[8,25,16,21,6],"preco_custo":0,"preco_venda":0},{"id":62,"cod":834,"nome":"D.V CATENA MALBEC MALBEC - 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":24,"cons_dia":0.16,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[5,13,3,9,6],"preco_custo":0,"preco_venda":0},{"id":63,"cod":2065,"nome":"EMILIANA NOVAS GRAN RESERVA CHARDONNAY 750 ML","formato":"750ml","tipo":"branco","abc":"C","status":"ativo","qtde_5m":24,"cons_dia":0.16,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[15,12,10,16,23],"preco_custo":0,"preco_venda":0},{"id":64,"cod":1861,"nome":"JACOB'S CREEK SHIRAZ  - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":24,"cons_dia":0.16,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[2,2,1,8,5],"preco_custo":0,"preco_venda":0},{"id":65,"cod":1017,"nome":"LA VIEILLE FERME BLANC 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":24,"cons_dia":0.16,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[5,3,5,6,8],"preco_custo":0,"preco_venda":0},{"id":66,"cod":978,"nome":"LAMBRUSCO REGGIANO CONCERTO 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":24,"cons_dia":0.16,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":67,"cod":14223,"nome":"LE MARCHESINE - OPERA ROSE   750 ML","formato":"750ml","tipo":"rose","abc":"C","status":"ativo","qtde_5m":24,"cons_dia":0.16,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":68,"cod":921,"nome":"MONTES ALPHA CABERNET SAUVIGNON - 750ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":24,"cons_dia":0.16,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[3,4,6,8,13],"preco_custo":0,"preco_venda":0},{"id":69,"cod":2965,"nome":"RAR COLLEZIONE PINOT NOIR - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":24,"cons_dia":0.16,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[4,1,6,15,12],"preco_custo":0,"preco_venda":0},{"id":70,"cod":15680,"nome":"SOPRASASSO VALPOLICELLA DOC - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":24,"cons_dia":0.16,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[9,7,3,2,2],"preco_custo":0,"preco_venda":0},{"id":71,"cod":17367,"nome":"ZUCCARDI Q CABERNET FRANC - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":24,"cons_dia":0.16,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[4,5,6,1,0],"preco_custo":0,"preco_venda":0},{"id":72,"cod":15155,"nome":"ALLEGRINI VALPOLICELLA DOC - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":21,"cons_dia":0.14,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[0,3,5,4,7],"preco_custo":0,"preco_venda":0},{"id":73,"cod":15891,"nome":"RAR COLLEZIONE VIOGNIER 750ML - N/C","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":19,"cons_dia":0.127,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[4,4,4,8,6],"preco_custo":0,"preco_venda":0},{"id":74,"cod":814,"nome":"BARISTA PINOTAGE - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":18,"cons_dia":0.12,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[1,0,2,11,5],"preco_custo":0,"preco_venda":0},{"id":75,"cod":17443,"nome":"FIANO DEL SALENTO - 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":18,"cons_dia":0.12,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[8,3,2,3,12],"preco_custo":0,"preco_venda":0},{"id":76,"cod":17365,"nome":"LUIGI BOSCA DE SANGRE CABERNET SAUVIGNON - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":18,"cons_dia":0.12,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[6,3,6,2,19],"preco_custo":0,"preco_venda":0},{"id":77,"cod":15468,"nome":"PIZZATO RESERVA ALICANTE BOUSCHET 750ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":18,"cons_dia":0.12,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[1,3,1,2,14],"preco_custo":0,"preco_venda":0},{"id":78,"cod":18558,"nome":"PROSECCO IL FRESCO MILLESIMATO BRUT DOC - VILLA SANDI 750ML (WINE DINNER)","formato":"750ml","tipo":"espumante","abc":"C","status":"ativo","qtde_5m":18,"cons_dia":0.12,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[0,3,10,0,0],"preco_custo":0,"preco_venda":0},{"id":79,"cod":14260,"nome":"PROSECCO IL FRESCO ROSE MILLESIMATO BRUT DOC - VILLA SANDI 750ML - N/C","formato":"750ml","tipo":"espumante","abc":"C","status":"ativo","qtde_5m":18,"cons_dia":0.12,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[1,7,14,1,3],"preco_custo":0,"preco_venda":0},{"id":80,"cod":18559,"nome":"ROCCA DELLE MACIE CAMPO MACCCIONE VERMENTINO MAREMMA 750ML- N/C","formato":"750ml","tipo":"branco","abc":"C","status":"ativo","qtde_5m":18,"cons_dia":0.12,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[0,0,4,2,0],"preco_custo":0,"preco_venda":0},{"id":81,"cod":18560,"nome":"ROCCA DELLE MACIE CAMPO MACIE CHIANTI CLASSIO 750ML (WINE DINNER)","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":18,"cons_dia":0.12,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[0,0,4,2,0],"preco_custo":0,"preco_venda":0},{"id":82,"cod":18561,"nome":"ROCCA DELLE MACIE CAMPO MACIE CHIANTI CLASSIO RISERVA DOCG 750ML (WINE DINNER)","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":18,"cons_dia":0.12,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[0,0,4,2,0],"preco_custo":0,"preco_venda":0},{"id":83,"cod":1925,"nome":"VEUVE CLICQUOT BRUT 750ML","formato":"750ml","tipo":"espumante","abc":"C","status":"ativo","qtde_5m":18,"cons_dia":0.12,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":84,"cod":16651,"nome":"VIGNETI DELLE DOLOMITI IGT ROSSO - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":18,"cons_dia":0.12,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[0,3,1,1,5],"preco_custo":0,"preco_venda":0},{"id":85,"cod":17260,"nome":"WHISPERING ANGEL ROSE 750 ML","formato":"750ml","tipo":"rose","abc":"C","status":"ativo","qtde_5m":18,"cons_dia":0.12,"pair_stock":1,"est_min":2,"repos_quinzenal":3,"monthly":[0,0,0,0,9],"preco_custo":0,"preco_venda":0},{"id":86,"cod":17354,"nome":"BARON PHILIPPE DE ROTHSCHILD BARON HENRI MEDOC - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":15,"cons_dia":0.1,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[2,4,3,3,1],"preco_custo":0,"preco_venda":0},{"id":87,"cod":1088,"nome":"DELLA VALPOLICELLA - NOVAIA 500ML (EVENTO SR. SERGIO)","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":14,"cons_dia":0.093,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":88,"cod":17456,"nome":"RAR COLLEZIONE GEWURZTRAMIVER - 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":13,"cons_dia":0.087,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[4,2,0,0,0],"preco_custo":0,"preco_venda":0},{"id":89,"cod":17335,"nome":"1/2 JOSEPH DROUHIN CHABLIS 375 ML","formato":"375ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[0,0,5,1,1],"preco_custo":0,"preco_venda":0},{"id":90,"cod":14857,"nome":"ARROCAL PASSIÓN CRIANZA - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[1,1,0,5,3],"preco_custo":0,"preco_venda":0},{"id":91,"cod":17447,"nome":"BARBERA D'ASTI PALAS DOCG - MICHELLE 750ML (RUPTURA)","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[1,1,6,5,12],"preco_custo":0,"preco_venda":0},{"id":92,"cod":17346,"nome":"BUENO TINTO PETIT VERDOT RESERVA - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[3,2,0,1,3],"preco_custo":0,"preco_venda":0},{"id":93,"cod":15892,"nome":"CARTUXA BRANCO FUNDAÇÃO EUGENIO DE ALMEIDA - 750 ML","formato":"750ml","tipo":"branco","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[3,5,5,3,0],"preco_custo":0,"preco_venda":0},{"id":94,"cod":16308,"nome":"CASTELO BANFI CENTINE BIANCO 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[1,3,2,4,8],"preco_custo":0,"preco_venda":0},{"id":95,"cod":1021,"nome":"DOMAINE JOSEPH DROUHIN VILLAGES - 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[0,0,1,5,1],"preco_custo":0,"preco_venda":0},{"id":96,"cod":16374,"nome":"DOMINIQUE LAURENT BOURGOGNE CHARDONNAY - 750 ML","formato":"750ml","tipo":"branco","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[1,1,2,0,1],"preco_custo":0,"preco_venda":0},{"id":97,"cod":14879,"nome":"DON AMERIGO GRAND RESERVA SYRAH 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[3,0,5,2,7],"preco_custo":0,"preco_venda":0},{"id":98,"cod":14880,"nome":"DON AMERIGO RESERVA PEDRO XIMENEZ - 750 ML","formato":"750ml","tipo":"sobremesa","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[1,6,0,0,5],"preco_custo":0,"preco_venda":0},{"id":99,"cod":16656,"nome":"ESPUMANTE VALLOTANO BRUT 750ML - N/C","formato":"750ml","tipo":"espumante","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":100,"cod":9550,"nome":"FAMILLE PERRIN COTES DU RHONE RESERVE ROUGE - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":101,"cod":2261,"nome":"FEUDI DI SAN MARZANO PRIMITIVO DI MANDURIA SESSANTANNI DOC - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[5,4,4,4,4],"preco_custo":0,"preco_venda":0},{"id":102,"cod":2494,"nome":"MARQUES DE MURRIETA RESERVA TINTO - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[0,1,3,2,2],"preco_custo":0,"preco_venda":0},{"id":103,"cod":923,"nome":"MONTES ALPHA SYRAH - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[0,3,2,2,4],"preco_custo":0,"preco_venda":0},{"id":104,"cod":17351,"nome":"MOUTON CADET ROUGE - 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[11,2,12,8,9],"preco_custo":0,"preco_venda":0},{"id":105,"cod":15913,"nome":"PIZZATO LEGNO CHARDONNAY GRAN RESERVA D.O.V.V - 750 ML","formato":"750ml","tipo":"branco","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[13,3,3,7,4],"preco_custo":0,"preco_venda":0},{"id":106,"cod":15233,"nome":"RAR RESERVA DE FAMILIA CABERNET SAUVIGNON  MERLOT 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[8,5,5,4,0],"preco_custo":0,"preco_venda":0},{"id":107,"cod":14172,"nome":"SAN MARZANO F NEGROAMARO SALENTO - 750 ML (RUPTURA)","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[2,0,1,4,3],"preco_custo":0,"preco_venda":0},{"id":108,"cod":15570,"nome":"ST. MICHAEL PINOT BLANC NAHE 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[1,8,3,4,2],"preco_custo":0,"preco_venda":0},{"id":109,"cod":18598,"nome":"TERRAZAS EXTREMO 750 ML (WINE DINNDER)","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":110,"cod":18597,"nome":"TERRAZAS GRAND CHARDONNAY 750 ML (WINE DINNDER)","formato":"750ml","tipo":"branco","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":111,"cod":18600,"nome":"TERRAZAS GRAND MALBEC 750 ML (WINE DINNDER)","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[0,0,5,3,0],"preco_custo":0,"preco_venda":0},{"id":112,"cod":18599,"nome":"TERRAZAS PETIT MANSENG LATE HARVEST 375 ML (WINE DINNDER)","formato":"375ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":12,"cons_dia":0.08,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":113,"cod":1110,"nome":"CARTUXA COLHEITA - FUNDACAO EUGENIO DE ALMEIDA 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":9,"cons_dia":0.06,"pair_stock":1,"est_min":2,"repos_quinzenal":2,"monthly":[2,3,2,7,8],"preco_custo":0,"preco_venda":0},{"id":114,"cod":1018,"nome":"DOPFF & FILS RIESLING ALSACE 750 ML","formato":"750ml","tipo":"branco","abc":"C","status":"ativo","qtde_5m":7,"cons_dia":0.047,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,4,1,2],"preco_custo":0,"preco_venda":0},{"id":115,"cod":13175,"nome":"MAZZEI FONTERUTOLI CHIANTI CLASSICO - 750 ML (RUPTURA)","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":7,"cons_dia":0.047,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[4,3,10,1,4],"preco_custo":0,"preco_venda":0},{"id":116,"cod":2487,"nome":"1/2  CASTELLO BANFI BRUNELLO DI MONTALCINO 375 ML","formato":"375ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,3,1,0,1],"preco_custo":0,"preco_venda":0},{"id":117,"cod":15231,"nome":"ALLEGRINI PALAZZO DELLA TORRE - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[1,2,0,1,0],"preco_custo":0,"preco_venda":0},{"id":118,"cod":3096,"nome":"ALMAVIVA 2021 - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[1,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":119,"cod":13508,"nome":"ALMAVIVA EPU ASSEMBLAGE 2018 - 750ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":120,"cod":2100,"nome":"CARTUXA RESERVA - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[2,0,1,1,2],"preco_custo":0,"preco_venda":0},{"id":121,"cod":1858,"nome":"CHEVAL DEL ANDES 2018 -  750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[3,0,1,0,0],"preco_custo":0,"preco_venda":0},{"id":122,"cod":975,"nome":"DOM PERIGNON VINTAGE 2012/2013 - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":123,"cod":1902,"nome":"JOSEPH DROUHIN CHABLIS 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,5,1,1],"preco_custo":0,"preco_venda":0},{"id":124,"cod":6294,"nome":"LE MARCHESINE FRANCIACORTA BRUT DOCG 750 ML","formato":"750ml","tipo":"espumante","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":125,"cod":1042,"nome":"LUIGI COPPO MOSCATO D`ASTI MONCALVINA - 750 ML","formato":"750ml","tipo":"sobremesa","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[8,3,2,3,6],"preco_custo":0,"preco_venda":0},{"id":126,"cod":1821,"nome":"LUIS PATO VINHAS VELHAS BRANCO 750 ML - N/C","formato":"750ml","tipo":"branco","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,0,0,1],"preco_custo":0,"preco_venda":0},{"id":127,"cod":15833,"nome":"MASI CAMPOFIORIN ROSSO VERONA IGT - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,1,1,0,1],"preco_custo":0,"preco_venda":0},{"id":128,"cod":879,"nome":"MIOLO LOTE 43 - 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[1,2,3,1,3],"preco_custo":0,"preco_venda":0},{"id":129,"cod":2124,"nome":"MOET & CHANDON IMPERIAL BRUT 750 ML","formato":"750ml","tipo":"espumante","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":130,"cod":2943,"nome":"MOET & CHANDON IMPERIAL ROSE 750 ML","formato":"750ml","tipo":"espumante","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":131,"cod":1072,"nome":"MORELLINO DI SCANSANO - 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,1,1,1,3],"preco_custo":0,"preco_venda":0},{"id":132,"cod":15887,"nome":"PERA GRAVE RESERVA - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[1,0,2,2,5],"preco_custo":0,"preco_venda":0},{"id":133,"cod":15393,"nome":"ROSSO DI MONTALCINO DOC - SIRO PACENTI - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[3,5,3,5,3],"preco_custo":0,"preco_venda":0},{"id":134,"cod":15395,"nome":"SCHIOPETTO PINOT GRIGIO COLLIO - 750 ML - N/C","formato":"750ml","tipo":"branco","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[2,2,7,1,1],"preco_custo":0,"preco_venda":0},{"id":135,"cod":1107,"nome":"SOALHEIRO ALVARINHO 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,0,0,5],"preco_custo":0,"preco_venda":0},{"id":136,"cod":15686,"nome":"TELMO RODRIGUEZ - BASA RUEDA 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,0,2,3],"preco_custo":0,"preco_venda":0},{"id":137,"cod":3052,"nome":"TENUTA DONNAFUGATA ANTHILIA IGT - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,1,0,0,1],"preco_custo":0,"preco_venda":0},{"id":138,"cod":14738,"nome":"VINA EDEN CHARDONNAY - 750 ML","formato":"750ml","tipo":"branco","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,1,1,1,0],"preco_custo":0,"preco_venda":0},{"id":139,"cod":2491,"nome":"ZENATO RIPASSA VALPOLICELLA SUPERIORE - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[1,2,1,2,1],"preco_custo":0,"preco_venda":0},{"id":140,"cod":17369,"nome":"ZUCCARDI SERIE A CHARDONNAY/VIOGNIER 750 ML","formato":"750ml","tipo":"branco","abc":"C","status":"ativo","qtde_5m":6,"cons_dia":0.04,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[2,2,13,0,2],"preco_custo":0,"preco_venda":0},{"id":141,"cod":2949,"nome":"CATENA ZAPATA CATENA MALBEC - MAGNUM 1.500 LT","formato":"Magnum","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":5,"cons_dia":0.033,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[30,16,34,33,37],"preco_custo":0,"preco_venda":0},{"id":142,"cod":2131,"nome":"CHATEAU LE PUY - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":4,"cons_dia":0.027,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[1,0,0,1,2],"preco_custo":0,"preco_venda":0},{"id":143,"cod":15508,"nome":"COBOS BRAMARE MALBEC - 750ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":4,"cons_dia":0.027,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[1,0,0,0,1],"preco_custo":0,"preco_venda":0},{"id":144,"cod":15464,"nome":"ESPORAO RESERVA - 750 ML - N/C","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":4,"cons_dia":0.027,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[3,6,8,10,1],"preco_custo":0,"preco_venda":0},{"id":145,"cod":15354,"nome":"PORTO GRAHAM'S TAWNY RESERVE - 4.5 LTS","formato":"750ml","tipo":"sobremesa","abc":"C","status":"ativo","qtde_5m":4,"cons_dia":0.027,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":146,"cod":816,"nome":"ST.THOMAS LES EMIRS - 750ML (LIBANO)","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":3,"cons_dia":0.02,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[1,1,2,2,7],"preco_custo":0,"preco_venda":0},{"id":147,"cod":962,"nome":"PORTO GRAHAM`S 20 YEARS OLD TAWN 750 ML","formato":"750ml","tipo":"sobremesa","abc":"C","status":"ativo","qtde_5m":2,"cons_dia":0.013,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":148,"cod":8836,"nome":"VEGA SICILIA VALBUENA 5 - 2018- 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":2,"cons_dia":0.013,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,1,0,0],"preco_custo":0,"preco_venda":0},{"id":149,"cod":15506,"nome":"BRANCAIA CHIANTI CLASSICO - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":1,"cons_dia":0.007,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[7,4,4,5,11],"preco_custo":0,"preco_venda":0},{"id":150,"cod":17368,"nome":"EL ENEMIGO CABERNET FRANC - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":1,"cons_dia":0.007,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,1,1,1,4],"preco_custo":0,"preco_venda":0},{"id":151,"cod":18621,"nome":"LALLIER - CHAMPAGNE BRUT 750 ML - TESTE N/C","formato":"750ml","tipo":"espumante","abc":"C","status":"ativo","qtde_5m":1,"cons_dia":0.007,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":152,"cod":18622,"nome":"ROSE LALLIER - CHAMPAGNE 750 ML","formato":"750ml","tipo":"rose","abc":"C","status":"ativo","qtde_5m":1,"cons_dia":0.007,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,0,0,0,0],"preco_custo":0,"preco_venda":0},{"id":153,"cod":1084,"nome":"TENUTA SAN GUIDO SASSICAIA 2020 - 750 ML","formato":"750ml","tipo":"tinto","abc":"C","status":"ativo","qtde_5m":1,"cons_dia":0.007,"pair_stock":1,"est_min":2,"repos_quinzenal":1,"monthly":[0,1,0,0,0],"preco_custo":0,"preco_venda":0}],"tc":[{"nome":"PORTO GRAHAMS - TC","jan":49,"fev":39,"mar":39,"abr":12,"mai":25,"total":164,"tem_gfa":false,"novo_maio":false,"acao":"MANTER"},{"nome":"ALAMOS MALBEC - CATENA ZAPATA  - TC","jan":22,"fev":30,"mar":56,"abr":28,"mai":6,"total":142,"tem_gfa":true,"novo_maio":false,"acao":"FUNIL"},{"nome":"DON AMERIGO RESERVA CABERNET SAUVINGNON TC 150","jan":4,"fev":2,"mar":1,"abr":6,"mai":1,"total":14,"tem_gfa":true,"novo_maio":false,"acao":"REMOVER"},{"nome":"BARBERA DALBA BOSCIO - TC","jan":0,"fev":0,"mar":0,"abr":0,"mai":17,"total":17,"tem_gfa":false,"novo_maio":true,"acao":"REVISAR"},{"nome":"COBOS FELINO CABERNET SAUVIGNON  - TC","jan":3,"fev":0,"mar":0,"abr":4,"mai":10,"total":17,"tem_gfa":true,"novo_maio":false,"acao":"REMOVER"},{"nome":"DON AMERIGO RESERVA PEDRO XIMENEZ - TC ","jan":1,"fev":6,"mar":0,"abr":0,"mai":5,"total":12,"tem_gfa":true,"novo_maio":false,"acao":"REMOVER"},{"nome":"LA VIELLE FERME ROSE - TC","jan":0,"fev":0,"mar":0,"abr":0,"mai":14,"total":14,"tem_gfa":false,"novo_maio":true,"acao":"REVISAR"},{"nome":"LUIGI BOSCA MALBEC - TC","jan":0,"fev":0,"mar":0,"abr":0,"mai":53,"total":53,"tem_gfa":false,"novo_maio":true,"acao":"REVISAR"},{"nome":"RAR COLLEZIONE GEWURZTRAMIVER - TC","jan":4,"fev":2,"mar":0,"abr":0,"mai":0,"total":6,"tem_gfa":true,"novo_maio":false,"acao":"REMOVER"},{"nome":"VALPOLICELLA RIPASSO DOC - RIONDO  -  TC ","jan":6,"fev":18,"mar":0,"abr":1,"mai":3,"total":28,"tem_gfa":true,"novo_maio":false,"acao":"REMOVER"},{"nome":"Villa Antinori Rosso - TC","jan":0,"fev":0,"mar":0,"abr":0,"mai":5,"total":5,"tem_gfa":true,"novo_maio":true,"acao":"REMOVER"},{"nome":"Whispering Angel Rose - TC","jan":0,"fev":0,"mar":0,"abr":0,"mai":9,"total":9,"tem_gfa":true,"novo_maio":true,"acao":"REMOVER"},{"nome":"CONCHA Y TORO MARQUES DE CASA CONCHA CABERNET SAUVIGNON - TC","jan":8,"fev":25,"mar":16,"abr":21,"mai":6,"total":76,"tem_gfa":true,"novo_maio":false,"acao":"FUNIL"},{"nome":"FLECHAS DE LOS ANDES PUNTA DE FLECHAS ROSE - TC","jan":6,"fev":3,"mar":4,"abr":1,"mai":2,"total":16,"tem_gfa":true,"novo_maio":false,"acao":"REMOVER"},{"nome":"BARONE MONT PINOT GRIGIO TC","jan":35,"fev":34,"mar":65,"abr":56,"mai":114,"total":304,"tem_gfa":false,"novo_maio":false,"acao":"MANTER"},{"nome":"BERNARDI JACUR BRUT - TC","jan":81,"fev":73,"mar":106,"abr":145,"mai":238,"total":643,"tem_gfa":true,"novo_maio":false,"acao":"FUNIL"},{"nome":"BUENO RESERVA PINOT NOIR - TC","jan":25,"fev":22,"mar":23,"abr":20,"mai":15,"total":105,"tem_gfa":true,"novo_maio":false,"acao":"FUNIL"},{"nome":"BORGONE IGT TOSCANA -  TC","jan":8,"fev":4,"mar":16,"abr":6,"mai":8,"total":42,"tem_gfa":false,"novo_maio":false,"acao":"MANTER"},{"nome":"CANNONAU - TC","jan":1,"fev":3,"mar":20,"abr":10,"mai":104,"total":138,"tem_gfa":true,"novo_maio":false,"acao":"FUNIL"},{"nome":"BUENO BELLAVISTA ESTATE SAUVIGNON BLANC - TC","jan":6,"fev":3,"mar":4,"abr":1,"mai":0,"total":14,"tem_gfa":true,"novo_maio":false,"acao":"REMOVER"},{"nome":"DI LENARDO PINOT GRIGIO - TC","jan":6,"fev":17,"mar":10,"abr":1,"mai":5,"total":39,"tem_gfa":true,"novo_maio":false,"acao":"REMOVER"}],"substitutions":[{"id":1,"origem_id":1,"origem":"BERNARDI JACUR BRUT 750ML","destino_id":35,"destino":"CAVE GEISSE BRUT 750 ML","tipo":"falta","motivo":"Espumante brasileiro premium, mesmo segmento","prioridade":1,"ativo":true},{"id":2,"origem_id":1,"origem":"BERNARDI JACUR BRUT 750ML","destino_id":10,"destino":"CHANDON PASSION 750 ML","tipo":"falta","motivo":"Espumante nacional, estilo mais frutado","prioridade":2,"ativo":true},{"id":3,"origem_id":12,"origem":"ALAMOS MALBEC - CATENA ZAPATA - 750 ML","destino_id":7,"destino":"CATENA ZAPATA CATENA MALBEC - 750 ML","tipo":"upsell","motivo":"O Alamos é produzido pela mesma família — este é o topo de linha deles","prioridade":1,"ativo":true},{"id":4,"origem_id":2,"origem":"CANNONAU DOC - CAPOCACCIA  DEIL NURAGHI - TINTO 750 ML","destino_id":18,"destino":"CANTINE DI ORA AMICALE ROSSO - 750 ML","tipo":"falta","motivo":"Tinto italiano estruturado, perfil similar","prioridade":1,"ativo":true},{"id":5,"origem_id":7,"origem":"CATENA ZAPATA CATENA MALBEC - 750 ML","destino_id":18,"destino":"ALMA NEGRA M BLEND 750 ML","tipo":"upsell","motivo":"Blend argentino premium, complexidade superior","prioridade":1,"ativo":true}],"kpis":[{"id":1,"data":"2026-05-01","kpi_key":"ticket_medio","valor":165,"notas":"Maio 2026 - dado aproximado"},{"id":2,"data":"2026-05-01","kpi_key":"penetracao_pct","valor":58,"notas":"Maio 2026"},{"id":3,"data":"2026-05-01","kpi_key":"garrafa_pct","valor":72,"notas":"Maio 2026 - TC ainda alto"},{"id":4,"data":"2026-05-01","kpi_key":"segunda_garrafa_pct","valor":18,"notas":"Maio 2026"}],"summary":{"total_skus":153,"classe_a":18,"classe_b":40,"classe_c":95,"tc_remover":10,"tc_funil":5}};
+
+// ── USERS (PIN) ──────────────────────────────────────────────
+const USERS = {
+  '1234': {nome:'Diana Milena', role:'sommelier'},
+  '5678': {nome:'Maître de Turno', role:'maitre'},
+  '0000': {nome:'Staff', role:'staff'}
+};
+
+// ── PERSISTENCE ──────────────────────────────────────────────
+const LS = {
+  estoque:'ti_v2_estoque', almox:'ti_v2_almox', wines:'ti_v2_wines',
+  subs:'ti_v2_subs', kpis:'ti_v2_kpis', garcons:'ti_v2_garcons',
+  view:'ti_v2_view', user:'ti_v2_user'
+};
+const ls = {
+  get:(k,d={})=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},
+  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+};
+
+// ── STATE ─────────────────────────────────────────────────────
+let currentUser = null;
+let pinVal = '';
+let estoque = ls.get(LS.estoque, {});
+let almox = ls.get(LS.almox, {});
+let kpiVals = ls.get(LS.kpis, {ticket_medio:165,penetracao_pct:58,garrafa_pct:72,segunda_garrafa_pct:18});
+let filterCtrl='all', filterPS='all', filterSub='all', filterTC='all', filterCarta='all';
+let editingWine = null, editingGarcon = null;
+let nextWineId = Math.max(...wines.map(w=>w.id)) + 1;
+let nextSubId = Math.max(...subs.map(s=>s.id), 0) + 1;
+const MONTHS=['Jan','Fev','Mar','Abr','Mai'];
+const PAGE={dashboard:'Dashboard',controle:'Controle Diário',pairstock:'Pair Stock',reposicao:'Reposição Quinzenal',substituicoes:'Substituições & Upselling',harmonizacao:'Harmonização',import:'Importar XLS',tacas:'Gestão de Taças',carta:'Carta de Vinhos',kpis:'KPIs & Metas',garcons:'Campeonato de Garçons'};
+
+// ── PIN ───────────────────────────────────────────────────────
+function pinPress(d){
+  if(pinVal.length>=4)return;
+  pinVal+=d;
+  updatePinDots();
+  if(pinVal.length===4)setTimeout(checkPin,120);
+}
+function pinClear(){pinVal=pinVal.slice(0,-1);updatePinDots();}
+function pinReset(){pinVal='';updatePinDots();document.getElementById('pin-err').textContent='';}
+function updatePinDots(){
+  for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('filled',i<pinVal.length);
+}
+function checkPin(){
+  const u=USERS[pinVal];
+  if(u){
+    currentUser=u;
+    ls.set(LS.user,u);
+    document.getElementById('pin-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    setupRole();
+    initApp();
+  } else {
+    document.getElementById('pin-err').textContent='PIN incorreto. Tente novamente.';
+    pinVal='';
+    updatePinDots();
+  }
+}
+function goLogout(){
+  if(!confirm('Sair do sistema?'))return;
+  currentUser=null;pinVal='';updatePinDots();
+  document.getElementById('pin-err').textContent='';
+  document.getElementById('pin-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+// ── ROLE SETUP ────────────────────────────────────────────────
+function setupRole(){
+  const r=currentUser.role;
+  document.getElementById('s-user-name').textContent=currentUser.nome;
+  document.getElementById('tb-role').textContent=r.charAt(0).toUpperCase()+r.slice(1);
+  document.getElementById('tb-role').className='role-badge role-'+r;
+  const sommOnly=document.querySelectorAll('.sommelier-only');
+  sommOnly.forEach(el=>{el.classList.toggle('visible',r==='sommelier')});
+  const sommOnlyFlex=document.querySelectorAll('.sommelier-only-flex');
+  sommOnlyFlex.forEach(el=>{el.classList.toggle('visible',r==='sommelier')});
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────
+function go(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');
+  });
+  document.getElementById('page-title').textContent=PAGE[id]||id;
+  ls.set(LS.view,id);
+  if(id==='controle')renderControle();
+  if(id==='pairstock')renderPS();
+  if(id==='reposicao')renderReposicao();
+  if(id==='substituicoes')renderSubs();
+  if(id==='tacas')renderTC();
+  if(id==='carta')renderCarta();
+  if(id==='garcons')renderGarcons();
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+function initApp(){
+  document.getElementById('tb-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  renderDashboard();
+  renderControle();
+  renderPS();
+  renderReposicao();
+  renderSubs();
+  renderHarmonizacao();
+  renderTC();
+  renderCarta();
+  renderKPIs();
+  renderGarcons();
+  updateRupBadge();
+  populateSubSelects();
+  // restore last view
+  const lv=ls.get(LS.view,'dashboard');
+  if(PAGE[lv])go(lv);
+  // restore KPI display
+  updateKpiCards();
+  const cnt=Object.keys(estoque).length;
+  if(cnt>0)showToast('✓ '+cnt+' estoques restaurados');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function getStatus(w){
+  const e=estoque[w.id];
+  if(e===undefined)return'empty';
+  if(e===0||e<w.pair_stock)return'critical';
+  if(e<=w.est_min)return'warn';
+  return'ok';
+}
+function statusColor(s){return{ok:'#2d7a4a',warn:'#e8a000',critical:'#c0392b',empty:'#ddd'}[s]||'#ddd';}
+function updateRupBadge(){
+  const r=wines.filter(w=>estoque[w.id]!==undefined&&estoque[w.id]<w.pair_stock).length;
+  document.getElementById('kv-rupt').textContent=r;
+  const b=document.getElementById('nb-rupt');
+  b.style.display=r>0?'inline-flex':'none';
+  if(r>0)b.textContent=r;
+}
+function sparkline(monthly){
+  const max=Math.max(...monthly,1);
+  const tr=monthly[4]>monthly[0]*1.2?'up':(monthly[4]<monthly[0]*0.8?'dn':'');
+  return monthly.map((v,i)=>{
+    const h=Math.max(2,Math.round((v/max)*26));
+    return`<div class="spk-b ${i===4?tr:''}" style="height:${h}px" title="${MONTHS[i]}: ${v}"></div>`;
+  }).join('');
+}
+function fmtTag(f){return`<span class="fmt-tag fmt-${f}">${f}</span>`;}
+function abcBadge(a){return`<span class="abc abc-${a}">${a}</span>`;}
+function stTag(s){const labels={ativo:'Ativo',em_revisao:'Em Revisão',inativo:'Inativo',suspenso:'Suspenso'};return`<span class="st-tag st-${s}">${labels[s]||s}</span>`;}
+function saveAll(){ls.set(LS.estoque,estoque);ls.set(LS.almox,almox);ls.set(LS.wines,wines);ls.set(LS.subs,subs);ls.set(LS.kpis,kpiVals);ls.set(LS.garcons,garcons);}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+function renderDashboard(){
+  const top10=wines.slice(0,10);
+  const maxQ=top10[0].qtde_5m;
+  const cols=['#1a2744','#243358','#2e4070','#38508e','#4260a8','#1a4a2e','#254f36','#2d6040','#367050','#3d8060'];
+  document.getElementById('top10-chart').innerHTML=top10.map((w,i)=>`
+    <div class="bar-row">
+      <div class="bar-lbl" title="${w.nome}">${w.nome.substring(0,26)}${w.nome.length>26?'…':''}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(w.qtde_5m/maxQ*100).toFixed(1)}%;background:${cols[i]}"><span>${w.qtde_5m}</span></div></div>
+    </div>`).join('');
+  // TC trend
+  const tcData=[{m:'Jan',tc:307,gfa:437},{m:'Fev',tc:317,gfa:412},{m:'Mar',tc:460,gfa:441},{m:'Abr',tc:390,gfa:438},{m:'Mai',tc:637,gfa:492}];
+  const mxTC=Math.max(...tcData.map(d=>d.tc+d.gfa));
+  document.getElementById('tc-trend-chart').innerHTML=`<div style="font-size:10px;color:var(--grey);margin-bottom:8px">Volume: TC (🔴) vs Garrafa (🟢)</div>`+tcData.map(d=>`
+    <div class="bar-row" style="margin-bottom:4px">
+      <div class="bar-lbl" style="width:30px">${d.m}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+        <div class="bar-track" style="height:10px"><div class="bar-fill" style="width:${(d.tc/mxTC*100).toFixed(0)}%;background:#8b1a1a"><span>${d.tc}</span></div></div>
+        <div class="bar-track" style="height:10px"><div class="bar-fill" style="width:${(d.gfa/mxTC*100).toFixed(0)}%;background:#1a4a2e"><span>${d.gfa}</span></div></div>
+      </div>
+    </div>`).join('');
+}
+function updateKpiCards(){
+  document.getElementById('kv-ticket').textContent=kpiVals.ticket_medio||'—';
+  document.getElementById('kv-garrafa').textContent=(kpiVals.garrafa_pct||'—')+'%';
+}
+
+// ── CONTROLE DIÁRIO ───────────────────────────────────────────
+function renderControle(){
+  const q=(document.getElementById('srch-ctrl')||{}).value||'';
+  let ws=wines.filter(w=>w.abc==='A'||w.abc==='B'||(estoque[w.id]!==undefined&&estoque[w.id]<w.pair_stock));
+  if(q)ws=ws.filter(w=>w.nome.toLowerCase().includes(q.toLowerCase())||String(w.cod).includes(q));
+  if(filterCtrl==='A')ws=ws.filter(w=>w.abc==='A');
+  else if(filterCtrl==='B')ws=ws.filter(w=>w.abc==='B');
+  else if(filterCtrl==='crit')ws=ws.filter(w=>{const s=getStatus(w);return s==='critical'||s==='warn';});
+  document.getElementById('daily-cards').innerHTML=ws.map(w=>{
+    const est=estoque[w.id]||0;
+    const s=getStatus(w);
+    const pct=est===0?0:Math.min(100,(est/w.est_min)*100);
+    const fc=statusColor(s);
+    const cc={ok:'ok',warn:'warn',critical:'crit',empty:''}[s]||'';
+    // substitution hint
+    const wSubs=subs.filter(sub=>sub.origem_id===w.id&&sub.ativo);
+    const subHint=wSubs.length>0?`<div style="font-size:10px;color:var(--amber);margin-top:6px;padding-top:6px;border-top:1px solid var(--greyl)">⇄ ${wSubs.map(s=>s.tipo==='upsell'?'Upsell: '+s.destino.substring(0,20):'Falta: '+s.destino.substring(0,20)).join(' · ')}</div>`:'';
+    return`<div class="dc ${cc}" id="dc-${w.id}">
+      <div class="dc-hdr"><div><div class="dc-name">${w.nome}</div><div class="dc-cod">Cód.${w.cod} · ${w.formato} · ${w.abc}</div></div>${stTag(w.status)}</div>
+      <div class="dc-metrics">
+        <div><div class="dc-m-val">${w.pair_stock}</div><div class="dc-m-lbl">Pair Stock</div></div>
+        <div><div class="dc-m-val">${w.est_min}</div><div class="dc-m-lbl">Mín.Adega</div></div>
+        <div><div class="dc-m-val">${w.cons_dia.toFixed(1)}</div><div class="dc-m-lbl">Cons/Dia</div></div>
+      </div>
+      <div class="dc-row">
+        <span style="font-size:11px;color:var(--grey)">Estoque:</span>
+        <input type="number" class="dc-sinp" min="0" value="${estoque[w.id]!==undefined?estoque[w.id]:''}" placeholder="—"
+          onchange="updEst(${w.id},this.value)" oninput="updEst(${w.id},this.value)">
+        <span class="sdot sdot-${s==='empty'?'empty':s==='ok'?'ok':s==='warn'?'warn':'crit'}" id="sdot-${w.id}"></span>
+      </div>
+      <div class="dc-bar"><div class="dc-fill" id="dcf-${w.id}" style="width:${pct}%;background:${fc}"></div></div>
+      ${subHint}
+    </div>`;
+  }).join('');
+}
+function updEst(id,val){
+  const parsed=val===''?undefined:(parseInt(val)||0);
+  if(parsed===undefined)delete estoque[id]; else estoque[id]=parsed;
+  ls.set(LS.estoque,estoque);
+  const w=wines.find(x=>x.id===id);if(!w)return;
+  const s=getStatus(w);
+  const pct=estoque[id]===undefined?0:Math.min(100,(estoque[id]/w.est_min)*100);
+  const fc=statusColor(s);
+  const dc=document.getElementById('dc-'+id);
+  if(dc)dc.className='dc '+(s==='empty'?'':s==='ok'?'ok':s==='warn'?'warn':'crit');
+  const dot=document.getElementById('sdot-'+id);
+  if(dot)dot.className='sdot sdot-'+(s==='empty'?'empty':s==='ok'?'ok':s==='warn'?'warn':'crit');
+  const fill=document.getElementById('dcf-'+id);
+  if(fill){fill.style.width=pct+'%';fill.style.background=fc;}
+  updateRupBadge();
+  updPSRow(id);
+  updReposRow(id);
+}
+function setFilterCtrl(f,el){filterCtrl=f;document.querySelectorAll('#view-controle .fb').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderControle();}
+function resetEstoque(){if(!confirm('Apagar todos os estoques salvos?'))return;estoque={};almox={};ls.set(LS.estoque,{});ls.set(LS.almox,{});renderControle();renderPS();renderReposicao();updateRupBadge();showToast('Estoque resetado');}
+function exportDiario(){
+  let txt='CONTROLE DIÁRIO — TERRAÇO ITÁLIA\n'+new Date().toLocaleString('pt-BR')+'\n\nCód.\tVinho\tClasse\tPair Stock\tEstoque\tStatus\n';
+  wines.filter(w=>w.abc==='A'||w.abc==='B').forEach(w=>{
+    const s=getStatus(w);
+    txt+=`${w.cod}\t${w.nome}\t${w.abc}\t${w.pair_stock}\t${estoque[w.id]??'—'}\t${{ok:'OK',warn:'Atenção',critical:'REPOR',empty:'Sem dado'}[s]}\n`;
+  });
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));a.download='controle_diario.txt';a.click();
+  showToast('Exportado');
+}
+
+// ── PAIR STOCK ────────────────────────────────────────────────
+function renderPS(){
+  const q=(document.getElementById('srch-ps')||{}).value||'';
+  let ws=[...wines];
+  if(q)ws=ws.filter(w=>w.nome.toLowerCase().includes(q.toLowerCase())||String(w.cod).includes(q));
+  if(filterPS==='A')ws=ws.filter(w=>w.abc==='A');
+  else if(filterPS==='B')ws=ws.filter(w=>w.abc==='B');
+  else if(filterPS==='C')ws=ws.filter(w=>w.abc==='C');
+  else if(filterPS==='375ml')ws=ws.filter(w=>w.formato==='375ml');
+  else if(filterPS==='em_revisao')ws=ws.filter(w=>w.status==='em_revisao');
+  const sLabels={ok:'✓ OK',warn:'⚠ Atenção',critical:'✗ Repor',empty:'—'};
+  document.getElementById('ps-body').innerHTML=ws.map((w,i)=>{
+    const s=getStatus(w);const sc=statusColor(s);const bg=i%2===0?'#faf7f2':'#fff';
+    const tr=w.monthly[4]>w.monthly[0]*1.2?'↑':(w.monthly[4]<w.monthly[0]*0.8?'↓':'→');
+    const tc=tr==='↑'?'#1a4a2e':(tr==='↓'?'#8b1a1a':'#888');
+    return`<tr style="background:${bg}">
+      <td style="color:#888;font-family:'DM Mono',monospace;font-size:10px">${i+1}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:10px;color:#888">${w.cod}</td>
+      <td><div style="font-weight:500;max-width:260px;font-size:12px">${w.nome}</div></td>
+      <td>${fmtTag(w.formato)}</td>
+      <td>${abcBadge(w.abc)}</td>
+      <td>${stTag(w.status)}</td>
+      ${w.monthly.map(v=>`<td style="font-family:'DM Mono',monospace;font-size:11px;text-align:center;color:#555">${v||''}</td>`).join('')}
+      <td><div class="spk">${sparkline(w.monthly)}</div></td>
+      <td style="font-family:'DM Mono',monospace;font-weight:600;text-align:center">${w.qtde_5m}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;text-align:center;color:#888">${w.cons_dia.toFixed(2)}</td>
+      <td style="font-family:'DM Mono',monospace;font-weight:700;text-align:center;color:var(--navy);font-size:14px">${w.pair_stock}</td>
+      <td style="font-family:'DM Mono',monospace;text-align:center">${w.est_min}</td>
+      <td style="font-family:'DM Mono',monospace;text-align:center">${w.repos_quinzenal}</td>
+      <td><input type="number" class="stock-inp" min="0" value="${estoque[w.id]!==undefined?estoque[w.id]:''}" placeholder="—"
+        onchange="updEst(${w.id},this.value)" oninput="updEst(${w.id},this.value)"></td>
+      <td id="pss-${w.id}" style="font-size:11px;color:${sc};font-weight:600">${estoque[w.id]!==undefined?sLabels[s]:'—'}</td>
+    </tr>`;
+  }).join('');
+}
+function updPSRow(id){
+  const el=document.getElementById('pss-'+id);if(!el)return;
+  const w=wines.find(x=>x.id===id);if(!w)return;
+  const s=getStatus(w);
+  el.style.color=statusColor(s);
+  el.textContent=estoque[id]!==undefined?{ok:'✓ OK',warn:'⚠ Atenção',critical:'✗ Repor',empty:'—'}[s]:'—';
+}
+function setFilterPS(f,el){filterPS=f;document.querySelectorAll('#view-pairstock .fb').forEach(b=>b.classList.remove('on','on-a','on-b','on-c'));el.classList.add('on'+(f==='A'?'-a':f==='B'?'-b':f==='C'?'-c':''));renderPS();}
+
+// ── REPOSIÇÃO ─────────────────────────────────────────────────
+function renderReposicao(){
+  const ws=wines.filter(w=>w.abc==='A'||w.abc==='B');
+  document.getElementById('repos-body').innerHTML=ws.map((w,i)=>{
+    const ax=almox[w.id]||0;const need=ax>0?Math.max(0,w.repos_quinzenal-ax):null;
+    const sc=ax>0?(need>0?'#c0392b':'#2d7a4a'):'#ccc';
+    const sl=ax>0?(need>0?`✗ Pedir ${need}`:'✓ OK'):'—';
+    const bg=i%2===0?'#faf7f2':'#fff';
+    return`<tr style="background:${bg}">
+      <td style="color:#888;font-size:10px;font-family:'DM Mono',monospace">${i+1}</td>
+      <td style="font-size:10px;font-family:'DM Mono',monospace;color:#888">${w.cod}</td>
+      <td><div style="font-weight:500;font-size:12px">${w.nome}</div></td>
+      <td>${abcBadge(w.abc)}</td>
+      <td style="font-family:'DM Mono',monospace;font-weight:700;text-align:center;color:var(--navy)">${w.repos_quinzenal}</td>
+      <td><input type="number" class="stock-inp" min="0" value="${ax||''}" placeholder="—"
+        onchange="updAlmox(${w.id},this.value)" oninput="updAlmox(${w.id},this.value)"></td>
+      <td id="rn-${w.id}" style="font-family:'DM Mono',monospace;font-weight:700;text-align:center;color:${sc}">${ax>0?(need>0?need:'0'):'—'}</td>
+      <td id="rs-${w.id}" style="font-size:11px;font-weight:600;color:${sc}">${sl}</td>
+    </tr>`;
+  }).join('');
+  updReposSummary();
+}
+function updAlmox(id,val){
+  const parsed=val===''?undefined:(parseInt(val)||0);
+  if(parsed===undefined)delete almox[id];else almox[id]=parsed;
+  ls.set(LS.almox,almox);
+  updReposRow(id);updReposSummary();
+}
+function updReposRow(id){
+  const w=wines.find(x=>x.id===id);if(!w)return;
+  const ax=almox[id]||0;const need=ax>0?Math.max(0,w.repos_quinzenal-ax):null;
+  const sc=ax>0?(need>0?'#c0392b':'#2d7a4a'):'#ccc';
+  const rn=document.getElementById('rn-'+id),rs=document.getElementById('rs-'+id);
+  if(rn){rn.textContent=ax>0?(need>0?need:'0'):'—';rn.style.color=sc;}
+  if(rs){rs.textContent=ax>0?(need>0?`✗ Pedir ${need}`:'✓ OK'):'—';rs.style.color=sc;}
+}
+function updReposSummary(){
+  const ws=wines.filter(w=>w.abc==='A'||w.abc==='B');
+  const need=ws.filter(w=>almox[w.id]>0&&w.repos_quinzenal-almox[w.id]>0);
+  const totalGfa=need.reduce((s,w)=>s+Math.max(0,w.repos_quinzenal-(almox[w.id]||0)),0);
+  const urgA=need.filter(w=>w.abc==='A').length;
+  document.getElementById('rp-itens').textContent=need.length||'—';
+  document.getElementById('rp-gfa').textContent=totalGfa||'—';
+  document.getElementById('rp-urg').textContent=urgA||'—';
+}
+function gerarPedido(){
+  const ws=wines.filter(w=>w.abc==='A'||w.abc==='B');
+  const need=ws.filter(w=>almox[w.id]>0&&w.repos_quinzenal-almox[w.id]>0);
+  if(!need.length){showToast('Nenhum déficit identificado');return;}
+  let txt='PEDIDO QUINZENAL — TERRAÇO ITÁLIA\n'+new Date().toLocaleDateString('pt-BR')+'\n\nCód.\tVinho\tClasse\tPedir\n';
+  need.forEach(w=>txt+=`${w.cod}\t${w.nome}\t${w.abc}\t${Math.max(0,w.repos_quinzenal-(almox[w.id]||0))}\n`);
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));a.download='pedido_quinzenal.txt';a.click();
+  showToast('Pedido gerado');
+}
+
+// ── SUBSTITUIÇÕES ─────────────────────────────────────────────
+function populateSubSelects(){
+  const opts=wines.map(w=>`<option value="${w.id}">${w.nome.substring(0,60)}</option>`).join('');
+  document.getElementById('sub-origem').innerHTML=opts;
+  document.getElementById('sub-destino').innerHTML=opts;
+}
+function renderSubs(){
+  let items=filterSub==='all'?subs:subs.filter(s=>s.tipo===filterSub);
+  const typeIco={falta:'🔴',upsell:'🟡',harmonizacao:'🟢'};
+  const typeLabel={falta:'Na Falta De',upsell:'Upselling',harmonizacao:'Harmonização'};
+  if(!items.length){document.getElementById('subs-list').innerHTML='<div style="text-align:center;padding:40px;color:var(--grey)">Nenhuma regra cadastrada. Clique em "+ Nova Regra" para adicionar.</div>';return;}
+  document.getElementById('subs-list').innerHTML=items.map(s=>`
+    <div class="sub-card">
+      <span class="sub-type sub-${s.tipo}">${typeIco[s.tipo]} ${typeLabel[s.tipo]}</span>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="sub-row">
+          <div class="sub-wine">${s.origem}</div>
+          <div class="sub-arrow">→</div>
+          <div class="sub-wine" style="color:var(--gold)">${s.destino}</div>
+        </div>
+        ${currentUser.role==='sommelier'?`<div style="display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm" onclick="toggleSub(${s.id})">${s.ativo?'Pausar':'Ativar'}</button>
+          <button class="btn btn-red btn-sm" onclick="deleteSub(${s.id})">✕</button>
+        </div>`:''}
+      </div>
+      <div class="sub-motivo">${s.motivo}</div>
+      <div class="sub-prio" style="margin-top:6px">Prioridade ${s.prioridade} · ${s.ativo?'<span style="color:var(--green)">Ativa</span>':'<span style="color:var(--grey)">Pausada</span>'}</div>
+    </div>`).join('');
+}
+function setFilterSub(f,el){filterSub=f;document.querySelectorAll('#view-substituicoes .fb').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderSubs();}
+function openSubModal(){document.getElementById('sub-modal').style.display='flex';}
+function closeSubModal(e){if(!e||e.target===document.getElementById('sub-modal'))document.getElementById('sub-modal').style.display='none';}
+function saveSub(){
+  const oId=parseInt(document.getElementById('sub-origem').value);
+  const dId=parseInt(document.getElementById('sub-destino').value);
+  if(oId===dId){showToast('Origem e destino não podem ser iguais');return;}
+  const s={id:nextSubId++,origem_id:oId,origem:wines.find(w=>w.id===oId)?.nome||'',destino_id:dId,destino:wines.find(w=>w.id===dId)?.nome||'',tipo:document.getElementById('sub-tipo').value,motivo:document.getElementById('sub-motivo').value,prioridade:parseInt(document.getElementById('sub-prio').value),ativo:true};
+  subs.push(s);saveAll();closeSubModal();renderSubs();showToast('Regra salva');
+}
+function toggleSub(id){const s=subs.find(x=>x.id===id);if(s){s.ativo=!s.ativo;saveAll();renderSubs();}}
+function deleteSub(id){if(!confirm('Remover esta regra?'))return;subs=subs.filter(x=>x.id!==id);saveAll();renderSubs();}
+
+// ── HARMONIZAÇÃO ──────────────────────────────────────────────
+const HARM=[
+  {icon:'🐟',title:'Entradas Frias',sub:'Carpaccio · Ostras · Crudo',rows:[['Carpaccio de Atum','Pinot Grigio Collio'],['Ostras ao Natural','Chablis — mineralidade do mar'],['Crudo de Robalo','Vermentino — frescor cítrico']]},
+  {icon:'🍝',title:'Massas Molho Branco',sub:'Alfredo · Carbonara',rows:[['Fettuccine Alfredo','Chardonnay com oak'],['Pasta Carbonara','Pinot Grigio estruturado'],['Cacio e Pepe','Frascati DOC']]},
+  {icon:'🍅',title:'Massas Molho Tomate',sub:'Amatriciana · Arrabbiata',rows:[['Penne Amatriciana','Chianti Classico'],['Pasta Bolognese','Montepulciano d\'Abruzzo'],['Arrabbiata','Barbera d\'Asti']]},
+  {icon:'🍚',title:'Risoto',sub:'Funghi · Açafrão · Mar',rows:[['Risoto de Porcini','Barbaresco leve'],['Risoto alla Milanese','Soave Classico'],['Risoto de Frutos do Mar','Gavi di Gavi']]},
+  {icon:'🥩',title:'Carnes Vermelhas',sub:'Bistecca · Ossobuco',rows:[['Bistecca Fiorentina','Brunello di Montalcino'],['Ossobuco alla Milanese','Barolo'],['Carré de Cordeiro','Amarone della Valpolicella']]},
+  {icon:'🍗',title:'Carnes Brancas',sub:'Vitela · Frango · Porco',rows:[['Vitela ao Limão','Pinot Noir leve'],['Pollo al Mattone','Dolcetto d\'Alba'],['Lombinho de Porco','Barbera — acidez equilibra']]},
+  {icon:'🧀',title:'Queijos',sub:'Tábua de Formaggi',rows:[['Gorgonzola · Dolcelatte','Porto Tawny — doce + salgado'],['Parmigiano Reggiano','Lambrusco — efervescência + umami'],['Pecorino Romano','Vermentino']]},
+  {icon:'🍮',title:'Sobremesas',sub:'Tiramisù · Panna Cotta',rows:[['Tiramisù','Moscato d\'Asti'],['Panna Cotta com Frutas','Asti Spumante'],['Cannoli Siciliano','Passito di Pantelleria']]},
+];
+function renderHarmonizacao(){
+  document.getElementById('harm-grid').innerHTML=HARM.map(h=>`
+    <div class="harm-card">
+      <div class="harm-card-hdr"><div class="harm-icon">${h.icon}</div><div><div class="harm-title">${h.title}</div><div class="harm-sub">${h.sub}</div></div></div>
+      <div class="harm-body">${h.rows.map(r=>`<div class="harm-row"><div class="harm-prato">${r[0]}</div><div class="harm-vinho">${r[1]}</div></div>`).join('')}</div>
+    </div>`).join('');
+}
+
+// ── IMPORT XLS ────────────────────────────────────────────────
+function dragOver(e){e.preventDefault();document.getElementById('import-zone').classList.add('drag');}
+function dragLeave(){document.getElementById('import-zone').classList.remove('drag');}
+function dropFile(e){e.preventDefault();dragLeave();const f=e.dataTransfer.files[0];if(f)processFile(f);}
+function handleFile(inp){const f=inp.files[0];if(f)processFile(f);}
+function log(msg,cls=''){const el=document.getElementById('import-log');el.style.display='block';el.innerHTML+=`<div class="${cls}">${msg}</div>`;el.scrollTop=el.scrollHeight;}
+function processFile(file){
+  log('📂 Lendo: '+file.name);
+  log('⚠️ Processamento real requer backend Supabase.','log-warn');
+  log('Simulando análise do arquivo...','log-warn');
+  setTimeout(()=>{
+    log('✓ Estrutura validada: DESCRIÇÃO · LT · Jan–Dez · Total','log-ok');
+    log('✓ Período detectado: Jan–Mai 2026 (5 meses com dados)','log-ok');
+    log('✓ 231 linhas encontradas','log-ok');
+    log('✓ 153 itens matched automaticamente por nome normalizado','log-ok');
+    log('⚠ 12 itens aguardando revisão manual','log-warn');
+    log('✓ Pair Stock recalculado para todos os itens','log-ok');
+    log('✓ Classificação ABC atualizada','log-ok');
+    log('— Conecte ao Supabase para persistir os dados reais','log-warn');
+    // show review items (simulated)
+    const reviewItems=['VINHO TINTO ESPECIAL CHEF - TC','BLEND EXCLUSIVO TERRAÇO 750ML','ESPUMANTE EVENTO DIC2025'];
+    if(reviewItems.length){
+      document.getElementById('import-review').style.display='block';
+      document.getElementById('review-list').innerHTML=reviewItems.map(name=>`
+        <div class="review-item">
+          <div class="review-name">${name}</div>
+          <span class="review-lt">LT: 0.75</span>
+          <select class="form-sel" style="width:200px;font-size:11px;padding:5px">
+            <option>Selecionar rótulo...</option>
+            ${wines.slice(0,10).map(w=>`<option value="${w.id}">${w.nome.substring(0,40)}</option>`).join('')}
+            <option value="novo">+ Criar novo rótulo</option>
+            <option value="ignorar">Ignorar sempre</option>
+          </select>
+        </div>`).join('');
+    }
+    showToast('Simulação concluída — conecte ao Supabase para import real');
+  },800);
+}
+
+// ── GESTÃO DE TAÇAS ───────────────────────────────────────────
+function renderTC(){
+  const kd=[{n:APP.tc.filter(t=>t.acao==='REMOVER').length,l:'Remover',c:'#8b1a1a',bg:'#fdf0f0'},{n:APP.tc.filter(t=>t.acao==='FUNIL').length,l:'Funil→Gfa',c:'#7a4a00',bg:'#fff8ec'},{n:APP.tc.filter(t=>t.acao==='REVISAR').length,l:'Revisar',c:'#8b4000',bg:'#fff0e0'},{n:APP.tc.filter(t=>t.acao==='MANTER').length,l:'Manter',c:'#1a4a2e',bg:'#edf5f0'}];
+  document.getElementById('tc-kpis').innerHTML=kd.map(k=>`<div style="background:${k.bg};border:1px solid ${k.c}30;border-radius:8px;padding:14px;text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:${k.c}">${k.n}</div><div style="font-size:10px;color:#666;margin-top:3px">${k.l}</div></div>`).join('');
+  filterTCItems('all');
+}
+function setFilterTC(f,el){filterTC=f;document.querySelectorAll('#view-tacas .fb').forEach(b=>b.classList.remove('on'));el.classList.add('on');filterTCItems(f);}
+function filterTCItems(f){
+  const items=f==='all'?APP.tc:APP.tc.filter(t=>t.acao===f);
+  const aL={REMOVER:'🔴 Remover da Carta',FUNIL:'🟡 Funil → Garrafa',REVISAR:'🟠 Recém — Revisar',MANTER:'🟢 Manter'};
+  document.getElementById('tc-body').innerHTML=items.map((t,i)=>{
+    const vals=[t.jan,t.fev,t.mar,t.abr,t.mai];
+    const tr=t.mai>t.jan*1.3&&t.jan>0?'↑ ALTA':t.mai<t.jan*0.7&&t.jan>0?'↓ BAIXA':t.jan===0&&t.mai>0?'🆕 NOVO':'→ ESTÁVEL';
+    const tc=tr.includes('↑')||tr.includes('NOVO')?'#1a4a2e':(tr.includes('↓')?'#8b1a1a':'#888');
+    return`<tr style="background:${i%2===0?'#faf7f2':'#fff'}">
+      <td style="font-weight:600;font-size:12px;max-width:200px">${t.nome}</td>
+      ${vals.map((v,mi)=>`<td style="font-family:'DM Mono',monospace;font-size:11px;text-align:center;${mi===4&&v>0?'font-weight:700;color:#8b1a1a':'color:#555'}">${v||''}</td>`).join('')}
+      <td style="font-family:'DM Mono',monospace;font-weight:700;text-align:center">${t.total}</td>
+      <td style="font-size:11px;font-weight:600;color:${tc};text-align:center">${tr}</td>
+      <td style="text-align:center;font-size:11px;font-weight:600;color:${t.tem_gfa?'#1a4a2e':'#8b1a1a'}">${t.tem_gfa?'✓ SIM':'✗ NÃO'}</td>
+      <td style="text-align:center;font-size:11px;font-weight:600;color:${t.novo_maio?'#8b1a1a':'#888'}">${t.novo_maio?'🆕 SIM':'—'}</td>
+      <td><span class="tc-acao tc-${t.acao}">${aL[t.acao]}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── CARTA DE VINHOS ───────────────────────────────────────────
+function renderCarta(){
+  const q=(document.getElementById('srch-carta')||{}).value||'';
+  let ws=[...wines];
+  if(q)ws=ws.filter(w=>w.nome.toLowerCase().includes(q.toLowerCase()));
+  if(filterCarta==='ativo')ws=ws.filter(w=>w.status==='ativo');
+  else if(filterCarta==='em_revisao')ws=ws.filter(w=>w.status==='em_revisao');
+  else if(filterCarta==='inativo')ws=ws.filter(w=>w.status==='inativo');
+  else if(['tinto','branco','rose','espumante','sobremesa'].includes(filterCarta))ws=ws.filter(w=>w.tipo===filterCarta);
+  const tipoIcon={tinto:'🍷',branco:'🥂',rose:'🌸',espumante:'✨',sobremesa:'🍯',taca:'🥃'};
+  document.getElementById('carta-grid').innerHTML=ws.map(w=>`
+    <div class="carta-card ${w.status}" ${currentUser.role==='sommelier'?`onclick="openWineModal(${w.id})" style="cursor:pointer"`:''}> 
+      <div class="carta-status-bar"></div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:18px">${tipoIcon[w.tipo]||'🍷'}</div>
+        <div style="display:flex;gap:4px;align-items:center">${abcBadge(w.abc)}${stTag(w.status)}</div>
+      </div>
+      <div style="font-weight:600;font-size:12px;line-height:1.3;margin-bottom:6px">${w.nome}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${fmtTag(w.formato)}<span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--grey)">#${w.cod}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;font-family:'DM Mono',monospace;color:var(--grey);border-top:1px solid var(--greyl);padding-top:6px">
+        <span>PS: <b style="color:var(--navy)">${w.pair_stock}</b></span>
+        <span>Cons: <b style="color:var(--navy)">${w.cons_dia.toFixed(2)}/dia</b></span>
+        ${w.preco_venda>0?`<span>R$ <b style="color:var(--gold)">${w.preco_venda.toFixed(0)}</b></span>`:''}
+      </div>
+      ${w.notas_servico?`<div style="font-size:10px;color:var(--grey);margin-top:6px;font-style:italic;border-top:1px solid var(--greyl);padding-top:5px">${w.notas_servico}</div>`:''}
+    </div>`).join('');
+}
+function setFilterCarta(f,el){filterCarta=f;document.querySelectorAll('#view-carta .fb').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderCarta();}
+function openWineModal(id){
+  editingWine=id;
+  document.getElementById('wine-modal').style.display='flex';
+  document.getElementById('wm-title').textContent=id?'Editar Rótulo':'Novo Rótulo';
+  document.getElementById('wm-del').style.display=id?'block':'none';
+  if(id){
+    const w=wines.find(x=>x.id===id);
+    document.getElementById('wm-nome').value=w.nome;
+    document.getElementById('wm-cod').value=w.cod||'';
+    document.getElementById('wm-formato').value=w.formato;
+    document.getElementById('wm-tipo').value=w.tipo;
+    document.getElementById('wm-status').value=w.status;
+    document.getElementById('wm-custo').value=w.preco_custo||'';
+    document.getElementById('wm-venda').value=w.preco_venda||'';
+    document.getElementById('wm-ps').value=w.pair_stock;
+    document.getElementById('wm-notas').value=w.notas_servico||'';
+  } else {
+    ['wm-nome','wm-cod','wm-custo','wm-venda','wm-ps','wm-notas'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('wm-status').value='em_revisao';
+  }
+}
+function closeWineModal(e){if(!e||e.target===document.getElementById('wine-modal'))document.getElementById('wine-modal').style.display='none';}
+function saveWine(){
+  const nome=document.getElementById('wm-nome').value.trim();
+  if(!nome){showToast('Nome obrigatório');return;}
+  const ps=parseInt(document.getElementById('wm-ps').value)||1;
+  if(editingWine){
+    const w=wines.find(x=>x.id===editingWine);
+    Object.assign(w,{nome:nome.toUpperCase(),cod:parseInt(document.getElementById('wm-cod').value)||w.cod,formato:document.getElementById('wm-formato').value,tipo:document.getElementById('wm-tipo').value,status:document.getElementById('wm-status').value,preco_custo:parseFloat(document.getElementById('wm-custo').value)||0,preco_venda:parseFloat(document.getElementById('wm-venda').value)||0,pair_stock:ps,est_min:ps*2,repos_quinzenal:Math.ceil(ps/1.3*15*1.2),notas_servico:document.getElementById('wm-notas').value});
+  } else {
+    wines.push({id:nextWineId++,cod:parseInt(document.getElementById('wm-cod').value)||99999,nome:nome.toUpperCase(),formato:document.getElementById('wm-formato').value,tipo:document.getElementById('wm-tipo').value,abc:'C',status:document.getElementById('wm-status').value,qtde_5m:0,cons_dia:0,pair_stock:ps,est_min:ps*2,repos_quinzenal:Math.ceil(ps/1.3*15*1.2),monthly:[0,0,0,0,0],preco_custo:parseFloat(document.getElementById('wm-custo').value)||0,preco_venda:parseFloat(document.getElementById('wm-venda').value)||0,notas_servico:document.getElementById('wm-notas').value});
+  }
+  saveAll();closeWineModal();renderCarta();populateSubSelects();showToast('Rótulo salvo');
+}
+function deleteWine(){
+  if(!confirm('Remover este rótulo da carta?'))return;
+  wines=wines.filter(x=>x.id!==editingWine);
+  saveAll();closeWineModal();renderCarta();showToast('Rótulo removido');
+}
+
+// ── KPIs ──────────────────────────────────────────────────────
+const KPIS=[
+  {id:'ticket_medio',label:'Ticket médio de vinho/mesa',unit:'R$',meta:180,alerta:140,desc:'Receita vinho ÷ mesas atendidas com vinho'},
+  {id:'penetracao_pct',label:'Taxa de penetração de vinho',unit:'%',meta:65,alerta:50,desc:'Mesas com vinho ÷ total de mesas'},
+  {id:'garrafa_pct',label:'% Receita garrafa vs taça',unit:'%',meta:80,alerta:70,desc:'Receita garrafa ÷ receita total vinho'},
+  {id:'segunda_garrafa_pct',label:'Taxa de 2ª garrafa',unit:'%',meta:25,alerta:15,desc:'Mesas 2+ garrafas ÷ mesas com garrafa'},
+  {id:'ruptura_pct',label:'Índice de ruptura',unit:'%',meta:3,alerta:5,desc:'SKUs em ruptura ÷ total SKUs (menor = melhor)',reverse:true},
+  {id:'giro_estoque',label:'Giro de estoque',unit:'x/mês',meta:1.5,alerta:1,desc:'Consumo mensal ÷ estoque médio'},
+];
+function renderKPIs(){
+  document.getElementById('kpi-inp-grid').innerHTML=KPIS.map(k=>`
+    <div class="ki-card">
+      <div class="ki-title">${k.label}</div>
+      <div class="ki-desc">${k.desc}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <input type="number" id="ki-${k.id}" step="0.1" value="${kpiVals[k.id]||''}" placeholder="Inserir valor..."
+          style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-family:'DM Mono',monospace;font-size:15px;color:var(--navy);outline:none"
+          oninput="calcKPI('${k.id}',this.value,${k.meta},${k.alerta},'${k.unit}',${!!k.reverse})">
+        <span style="font-size:12px;color:var(--grey)">${k.unit}</span>
+      </div>
+      <div class="ki-meta" id="km-${k.id}">Meta: <b>${k.meta}${k.unit}</b> · Alerta: <b>${k.alerta}${k.unit}</b></div>
+      <div class="ki-bar"><div class="ki-fill" id="kf-${k.id}" style="width:0%;background:#ddd"></div></div>
+    </div>`).join('');
+  // render saved values
+  KPIS.forEach(k=>{if(kpiVals[k.id])calcKPI(k.id,kpiVals[k.id],k.meta,k.alerta,k.unit,!!k.reverse);});
+}
+function calcKPI(id,val,meta,alerta,unit,reverse){
+  const v=parseFloat(val);if(isNaN(v))return;
+  kpiVals[id]=v;ls.set(LS.kpis,kpiVals);
+  updateKpiCards();
+  const pct=reverse?Math.min(100,(alerta/Math.max(v,.1))*100):Math.min(100,(v/meta)*100);
+  const color=reverse?(v<=meta?'#2d7a4a':v<=alerta?'#e8a000':'#c0392b'):(v>=meta?'#2d7a4a':v>=alerta?'#e8a000':'#c0392b');
+  const label=reverse?(v<=meta?`✓ Excelente`:(v<=alerta?`⚠ Atenção`:`✗ Crítico`)):(v>=meta?`✓ Meta atingida`:(v>=alerta?`⚠ Atenção`:`✗ Crítico`));
+  const el=document.getElementById('km-'+id),bf=document.getElementById('kf-'+id);
+  if(el)el.innerHTML=`<span style="color:${color};font-weight:600">${label} — ${v}${unit}</span>`;
+  if(bf){bf.style.width=pct+'%';bf.style.background=color;}
+}
+
+// ── CAMPEONATO ────────────────────────────────────────────────
+function renderGarcons(){
+  if(!garcons.length){document.getElementById('garcons-ranking').innerHTML='<div style="text-align:center;padding:40px;color:var(--grey)">Nenhum resultado registrado. Clique em "+ Registrar Resultado".</div>';return;}
+  // calculate scores
+  const scored=garcons.map(g=>{
+    const ticket=g.receita/Math.max(g.com_vinho,1);
+    const taxaGfa=g.com_gfa/Math.max(g.mesas,1)*100;
+    const taxaSegunda=g.duas_gfa/Math.max(g.com_gfa,1)*100;
+    const score=(ticket/180*40)+(taxaGfa/80*30)+(g.receita/5000*20)+(taxaSegunda/25*10);
+    return{...g,ticket:ticket.toFixed(0),taxaGfa:taxaGfa.toFixed(1),taxaSegunda:taxaSegunda.toFixed(1),score:score.toFixed(1)};
+  }).sort((a,b)=>b.score-a.score);
+  document.getElementById('garcons-ranking').innerHTML=`
+    <div class="tw tc-wrap"><table>
+      <thead><tr><th>Pos</th><th>Garçom</th><th>Período</th><th>Mesas</th><th>Receita Vinho</th><th>Ticket Médio</th><th>Taxa Garrafa</th><th>2ª Garrafa</th><th>Score</th></tr></thead>
+      <tbody>${scored.map((g,i)=>`
+        <tr style="background:${i===0?'#fffdf5':i%2===0?'#faf7f2':'#fff'}">
+          <td><span style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:${i===0?'var(--gold)':i===1?'var(--grey)':i===2?'#b87333':'var(--navy)'}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</span></td>
+          <td style="font-weight:600">${g.nome}</td>
+          <td style="font-size:11px;color:var(--grey);font-family:'DM Mono',monospace">${g.periodo}</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace">${g.mesas}</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">R$ ${parseFloat(g.receita).toFixed(0)}</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace;color:var(--gold);font-weight:600">R$ ${g.ticket}</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace">${g.taxaGfa}%</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace">${g.taxaSegunda}%</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;font-size:15px;color:var(--navy)">${g.score}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+function openGarconModal(){editingGarcon=null;['gm-nome','gm-periodo','gm-mesas','gm-receita','gm-com-gfa','gm-duas-gfa','gm-com-vinho'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('garcon-modal').style.display='flex';}
+function closeGarconModal(e){if(!e||e.target===document.getElementById('garcon-modal'))document.getElementById('garcon-modal').style.display='none';}
+function saveGarcon(){
+  const nome=document.getElementById('gm-nome').value.trim();if(!nome){showToast('Nome obrigatório');return;}
+  garcons.push({id:Date.now(),nome,periodo:document.getElementById('gm-periodo').value,mesas:parseInt(document.getElementById('gm-mesas').value)||0,receita:parseFloat(document.getElementById('gm-receita').value)||0,com_gfa:parseInt(document.getElementById('gm-com-gfa').value)||0,duas_gfa:parseInt(document.getElementById('gm-duas-gfa').value)||0,com_vinho:parseInt(document.getElementById('gm-com-vinho').value)||0});
+  saveAll();closeGarconModal();renderGarcons();showToast('Resultado registrado');
+}
+</script>
+
+
+<!-- Connection banner -->
+<div id="conn-banner" class="syncing">
+  <div class="cb-dot syncing" id="cb-dot"></div>
+  <span id="cb-txt">Conectando ao banco de dados...</span>
+  <span style="margin-left:auto;opacity:.35;font-size:9px">fvwlfoksplfwfcbnenwj.supabase.co</span>
+</div>
+<!-- Loading overlay -->
+<div id="ld-overlay">
+  <div class="ld-box">
+    <div class="ld-spin"></div>
+    <div class="ld-msg" id="ld-msg">Carregando...</div>
+    <div class="ld-sub" id="ld-sub">Por favor aguarde</div>
+  </div>
+</div>
+
+<script>
+
+// ═══════════════════════════════════════════════════════════════════
+// SUPABASE CONFIG
+// Obter em: Supabase → Settings → API → "anon public"
+// ═══════════════════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://fvwlfoksplfwfcbnenwj.supabase.co';
+const SUPABASE_ANON = 'COLE_SUA_ANON_KEY_AQUI'; // ← substitua aqui
+
+let SB        = null;
+let DB_ONLINE = false;
+let wines     = [];   // loaded from DB or seed
+let subs      = [];
+let garcons   = [];
+
+// ── UI ─────────────────────────────────────────────────────────
+function ldShow(msg,sub){
+  const o=document.getElementById('ld-overlay');if(o)o.classList.add('show');
+  const m=document.getElementById('ld-msg');if(m)m.textContent=msg||'Carregando...';
+  const s=document.getElementById('ld-sub');if(s)s.textContent=sub||'Aguarde';
+}
+function ldHide(){const o=document.getElementById('ld-overlay');if(o)o.classList.remove('show');}
+function ldMsg(m){const el=document.getElementById('ld-msg');if(el)el.textContent=m;}
+
+function setBanner(state,msg){
+  const b=document.getElementById('conn-banner');if(!b)return;
+  b.className='conn-banner '+state;
+  const dot=document.getElementById('cb-dot');if(dot)dot.className='cb-dot '+state;
+  const txt=document.getElementById('cb-txt');if(txt)txt.textContent=msg;
+  const sdb=document.getElementById('s-dbstatus');
+  if(sdb){sdb.textContent=state==='online'?'● Supabase online':state==='offline'?'● Offline (cache)':'● Conectando...';sdb.className='s-db '+(state==='online'?'online':'ls');}
+  const tb=document.getElementById('tb-sync');
+  if(tb){tb.textContent=state==='online'?'● Banco':state==='offline'?'○ Offline':'…';tb.className='sync-badge '+(state==='online'?'sb-online':state==='offline'?'sb-offline':'sb-saving');}
+}
+
+// ── INIT ────────────────────────────────────────────────────────
+async function dbInit(){
+  setBanner('syncing','Conectando ao banco...');
+  if(!SUPABASE_ANON||SUPABASE_ANON==='COLE_SUA_ANON_KEY_AQUI'){
+    setBanner('offline','Modo offline — configure SUPABASE_ANON no arquivo HTML');
+    console.warn('[DB] Anon key não configurada');
+    return;
+  }
+  try{
+    SB=supabase.createClient(SUPABASE_URL,SUPABASE_ANON,{auth:{persistSession:false,autoRefreshToken:false}});
+    const{error}=await SB.from('wines').select('id',{count:'exact',head:true});
+    if(error)throw error;
+    DB_ONLINE=true;
+    setBanner('online','Supabase conectado ✓');
+    console.log('[DB] Online');
+  }catch(e){
+    DB_ONLINE=false;
+    setBanner('offline','Offline: '+(e.message||e));
+    console.warn('[DB] Offline:',e);
+  }
+}
+
+// ── LOAD ────────────────────────────────────────────────────────
+async function dbLoad(){
+  if(!DB_ONLINE||!SB)return;
+  try{
+    ldMsg('Carregando vinhos...');
+    const{data:wData,error:wErr}=await SB.from('wines').select('*').order('cons_dia',{ascending:false});
+    if(!wErr&&wData?.length){
+      wines=wData.map(w=>{
+        const sw=APP.wines.find(s=>s.cod===w.cod_erp)||{};
+        return{id:w.id,uuid:w.id,cod:w.cod_erp,nome:w.nome,
+          formato:w.formato_ml===375?'375ml':w.formato_ml===1500?'Magnum':'750ml',
+          tipo:w.tipo,abc:w.abc_class,status:w.status,
+          cons_dia:parseFloat(w.cons_dia)||0,pair_stock:w.pair_stock||1,
+          est_min:w.est_min_adega||2,repos_quinzenal:w.repos_quinzenal||1,
+          qtde_5m:sw.qtde_5m||0,monthly:sw.monthly||[0,0,0,0,0],
+          preco_custo:parseFloat(w.preco_custo)||0,preco_venda:parseFloat(w.preco_venda)||0,
+          notas_servico:w.notas_servico||'',subs:[]};
+      });
+      console.log('[DB] wines:',wines.length);
+    }
+    ldMsg('Substituições...');
+    const{data:sData}=await SB.from('wine_substitutions').select('*').eq('ativo',true);
+    if(sData?.length){
+      const uN=Object.fromEntries(wines.map(w=>[w.uuid,w.nome]));
+      subs=sData.map(s=>({id:s.id,origem_id:s.wine_origem_id,destino_id:s.wine_destino_id,
+        origem_nome:uN[s.wine_origem_id]||'?',destino_nome:uN[s.wine_destino_id]||'?',
+        tipo:s.tipo,motivo:s.motivo||'',prioridade:s.prioridade||1,ativo:s.ativo}));
+      wines.forEach(w=>{w.subs=subs.filter(s=>s.origem_id===w.uuid);});
+    }
+    ldMsg('KPIs...');
+    const{data:kData}=await SB.from('kpi_entries').select('*').order('data',{ascending:false}).limit(60);
+    if(kData?.length){const seen={};kData.forEach(k=>{if(!seen[k.kpi_key])seen[k.kpi_key]=parseFloat(k.valor);});kpiVals={...kpiVals,...seen};}
+    ldMsg('Campeonato...');
+    const{data:gData}=await SB.from('garcon_results').select('*').order('score',{ascending:false});
+    if(gData?.length)garcons=gData;
+    console.log('[DB] Load complete');
+  }catch(e){console.error('[DB] Load error:',e);showToast('Erro ao carregar — usando cache local');}
+}
+
+// ── SAVERS ─────────────────────────────────────────────────────
+async function dbSaveStock(uuid,qty,type){
+  if(!DB_ONLINE||!SB||!uuid?.includes('-'))return;
+  const today=new Date().toISOString().split('T')[0];
+  try{
+    if(type==='floor'){
+      const hr=new Date().getHours();
+      const turno=hr<14?'abertura':hr<17?'15h':'fechamento';
+      await SB.from('stock_floor').upsert({wine_id:uuid,data:today,turno,quantidade:qty},{onConflict:'wine_id,data,turno'});
+    }else{
+      await SB.from('stock_warehouse').upsert({wine_id:uuid,data:today,quantidade:qty},{onConflict:'wine_id,data'});
+    }
+  }catch(e){console.warn('[DB] saveStock:',e.message);}
+}
+async function dbSaveKPI(key,val){
+  if(!DB_ONLINE||!SB)return;
+  const today=new Date().toISOString().split('T')[0];
+  try{await SB.from('kpi_entries').upsert({data:today,kpi_key:key,valor:val,fonte:'manual'},{onConflict:'data,kpi_key'});}catch(e){console.warn('[DB] saveKPI:',e.message);}
+}
+async function dbSaveSub(sub){
+  if(!DB_ONLINE||!SB)return null;
+  try{const{data,error}=await SB.from('wine_substitutions').insert({wine_origem_id:sub.origem_id,wine_destino_id:sub.destino_id,tipo:sub.tipo,motivo:sub.motivo,prioridade:sub.prioridade,ativo:true}).select().single();if(error)throw error;return data;}catch(e){console.warn('[DB] saveSub:',e.message);return null;}
+}
+async function dbToggleSub(id,ativo){if(!DB_ONLINE||!SB||!id?.includes('-'))return;try{await SB.from('wine_substitutions').update({ativo}).eq('id',id);}catch(e){}}
+async function dbDeleteSub(id){if(!DB_ONLINE||!SB||!id?.includes('-'))return;try{await SB.from('wine_substitutions').delete().eq('id',id);}catch(e){}}
+async function dbSaveWine(payload){
+  if(!DB_ONLINE||!SB)return null;
+  const row={cod_erp:payload.cod||null,nome:payload.nome,formato_ml:payload.formato_ml||750,tipo:payload.tipo||'tinto',status:payload.status||'em_revisao',pair_stock:payload.pair_stock||1,est_min_adega:(payload.pair_stock||1)*2,repos_quinzenal:Math.ceil((payload.pair_stock||1)/1.3*15*1.2),preco_custo:payload.preco_custo||0,preco_venda:payload.preco_venda||0,notas_servico:payload.notas_servico||''};
+  try{
+    if(payload.uuid?.includes('-')){const{data,error}=await SB.from('wines').update(row).eq('id',payload.uuid).select().single();if(error)throw error;return data;}
+    else{const{data,error}=await SB.from('wines').insert(row).select().single();if(error)throw error;return data;}
+  }catch(e){console.warn('[DB] saveWine:',e.message);return null;}
+}
+async function dbSaveGarcon(g){
+  if(!DB_ONLINE||!SB)return null;
+  try{const{data,error}=await SB.from('garcon_results').insert({nome_garcon:g.nome,periodo:g.periodo,mesas:g.mesas,mesas_com_vinho:g.com_vinho,mesas_com_gfa:g.com_gfa,mesas_duas_gfa:g.duas_gfa,receita_vinho:g.receita}).select().single();if(error)throw error;return data;}catch(e){console.warn('[DB] saveGarcon:',e.message);return null;}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// XLS EXPORT (SheetJS)
+// ═══════════════════════════════════════════════════════════════════
+function xlsExportPedido(){
+  if(typeof XLSX==='undefined'){showToast('Aguarde — carregando biblioteca XLS...');return;}
+  const today=new Date().toLocaleDateString('pt-BR');
+  const rows=[
+    ['PEDIDO DE COMPRA — TERRAÇO ITÁLIA'],
+    ['Data:', today, '', 'Gerado por:', currentUser?.nome||'—'],
+    [],
+    ['Cód. ERP','Vinho','Formato','Classe','Repos. Quinzenal','Estoque Almox.','PEDIR (un.)','Obs.']
+  ];
+  let total=0;
+  wines.filter(w=>w.abc==='A'||w.abc==='B').forEach(w=>{
+    const k=w.uuid||w.id||w.cod, ax=almox[k]||0;
+    const need=ax>0?Math.max(0,w.repos_quinzenal-ax):w.repos_quinzenal;
+    if(need>0){rows.push([w.cod,w.nome,w.formato,w.abc,w.repos_quinzenal,ax||'—',need,'']);total+=need;}
+  });
+  rows.push([]);
+  rows.push(['','','','','','TOTAL:',total,'']);
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:10},{wch:55},{wch:10},{wch:8},{wch:15},{wch:14},{wch:12},{wch:28}];
+  XLSX.utils.book_append_sheet(wb,ws,'Pedido de Compra');
+  // sheet 2: full reference A+B
+  const ref=[['Cód.','Vinho','Formato','Classe','Cons/Dia','Pair Stock','Est.Mín','Repos.Quin','Adega','Almox.','Status']];
+  wines.filter(w=>w.abc==='A'||w.abc==='B').forEach(w=>{const k=w.uuid||w.id||w.cod;ref.push([w.cod,w.nome,w.formato,w.abc,(w.cons_dia||0).toFixed(2),w.pair_stock,w.est_min,w.repos_quinzenal,estoque[k]??'—',almox[k]??'—',w.status]);});
+  const ws2=XLSX.utils.aoa_to_sheet(ref);
+  ws2['!cols']=[{wch:10},{wch:55},{wch:10},{wch:8},{wch:10},{wch:11},{wch:9},{wch:11},{wch:8},{wch:8},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Referência A+B');
+  XLSX.writeFile(wb,`Pedido_Compra_TI_${today.replace(/\//g,'-')}.xlsx`);
+  showToast('📊 Pedido de Compra exportado');
+}
+
+function xlsExportRequisicao(){
+  if(typeof XLSX==='undefined'){showToast('Aguarde — carregando biblioteca XLS...');return;}
+  const today=new Date().toLocaleDateString('pt-BR');
+  const hr=new Date().getHours();
+  const turno=hr<14?'Abertura (manhã)':hr<17?'15h (jantar)':'Fechamento';
+  const rows=[
+    ['REQUISIÇÃO INTERNA — ALMOXARIFADO → ADEGA DO ANDAR'],
+    ['Data:',today,'','Turno:',turno],
+    ['Solicitante:',currentUser?.nome||'—'],
+    [],
+    ['Cód. ERP','Vinho','Formato','Classe','Pair Stock (mín)','Estoque Adega','SOLICITAR (un.)','Recebido (un.)','Ass. Almoxarife']
+  ];
+  let total=0;
+  wines.filter(w=>w.abc==='A'||w.abc==='B').forEach(w=>{
+    const k=w.uuid||w.id||w.cod, est=estoque[k];
+    const need=est!==undefined?Math.max(0,w.pair_stock-est):w.pair_stock;
+    if(need>0){rows.push([w.cod,w.nome,w.formato,w.abc,w.pair_stock,est??'—',need,'','']);total++;}
+  });
+  if(total===0){showToast('Nenhum item abaixo do pair stock para requisitar');return;}
+  rows.push([]);
+  rows.push(['','','','','','Itens:',total,'','']);
+  rows.push([]);
+  rows.push(['Observações:']);rows.push(['']);
+  rows.push([]);
+  rows.push(['Assinatura (Adega):','','','','Assinatura (Almoxarife):']);
+  rows.push(['_'.repeat(36),'','','','_'.repeat(36)]);
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:10},{wch:52},{wch:10},{wch:8},{wch:15},{wch:13},{wch:14},{wch:14},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws,'Requisição Interna');
+  XLSX.writeFile(wb,`Requisicao_Adega_TI_${today.replace(/\//g,'-')}.xlsx`);
+  showToast('📊 Requisição Interna exportada');
+}
+
+function xlsExportControle(){
+  if(typeof XLSX==='undefined'){showToast('Aguarde — carregando biblioteca XLS...');return;}
+  const today=new Date().toLocaleDateString('pt-BR');
+  const rows=[
+    ['CONTROLE DIÁRIO — ADEGA DO ANDAR'],
+    ['Data:',today,'Hora:',new Date().toLocaleTimeString('pt-BR')],
+    ['Responsável:',currentUser?.nome||'—'],
+    [],
+    ['Cód.','Vinho','Formato','Classe','Pair Stock','Estoque Atual','Status','Obs.']
+  ];
+  wines.filter(w=>w.abc==='A'||w.abc==='B').forEach(w=>{
+    const k=w.uuid||w.id||w.cod,s=getStatus(w);
+    const sl={ok:'OK',warn:'Atenção',critical:'REPOR',empty:'Não informado'}[s];
+    rows.push([w.cod,w.nome,w.formato,w.abc,w.pair_stock,estoque[k]??'—',sl,'']);
+  });
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:10},{wch:52},{wch:10},{wch:8},{wch:11},{wch:12},{wch:12},{wch:28}];
+  XLSX.utils.book_append_sheet(wb,ws,'Controle Diário');
+  XLSX.writeFile(wb,`Controle_Diario_TI_${today.replace(/\//g,'-')}.xlsx`);
+  showToast('📊 Controle Diário exportado');
+}
+
+
+// ── USERS (PIN) ──────────────────────────────────────────────
+
+
+// ── PERSISTENCE ──────────────────────────────────────────────
+
+
+
+// ── STATE ─────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ── PIN ───────────────────────────────────────────────────────
+function pinPress(d){
+  if(pinVal.length>=4)return;
+  pinVal+=d;
+  updatePinDots();
+  if(pinVal.length===4)setTimeout(checkPin,120);
+}
+function pinClear(){pinVal=pinVal.slice(0,-1);updatePinDots();}
+function pinReset(){pinVal='';updatePinDots();document.getElementById('pin-err').textContent='';}
+function updatePinDots(){
+  for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('filled',i<pinVal.length);
+}
+async function checkPin(){
+  const u=USERS[pinVal];
+  if(u){
+    currentUser=u;
+    ls.set(LS.user,u);
+    document.getElementById('pin-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    setupRole();
+    initApp(); // boot with seed data immediately (fast)
+    if(DB_ONLINE){
+      ldShow('Carregando dados do banco...','Supabase');
+      await dbLoad();
+      ldHide();
+      renderDashboard();renderControle();renderPS();renderReposicao();
+      renderSubs();renderTC();renderCarta();renderKPIs();renderGarcons();
+      updateRupBadge();updateKpiCards();
+      showToast('✓ Dados carregados do banco');
+    }
+  } else {
+    document.getElementById('pin-err').textContent='PIN incorreto. Tente novamente.';
+    pinVal='';
+    updatePinDots();
+  }
+}
+function goLogout(){
+  if(!confirm('Sair do sistema?'))return;
+  currentUser=null;pinVal='';updatePinDots();
+  document.getElementById('pin-err').textContent='';
+  document.getElementById('pin-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+// ── ROLE SETUP ────────────────────────────────────────────────
+function setupRole(){
+  const r=currentUser.role;
+  document.getElementById('s-user-name').textContent=currentUser.nome;
+  document.getElementById('tb-role').textContent=r.charAt(0).toUpperCase()+r.slice(1);
+  document.getElementById('tb-role').className='role-badge role-'+r;
+  const sommOnly=document.querySelectorAll('.sommelier-only');
+  sommOnly.forEach(el=>{el.classList.toggle('visible',r==='sommelier')});
+  const sommOnlyFlex=document.querySelectorAll('.sommelier-only-flex');
+  sommOnlyFlex.forEach(el=>{el.classList.toggle('visible',r==='sommelier')});
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────
+function go(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');
+  });
+  document.getElementById('page-title').textContent=PAGE[id]||id;
+  ls.set(LS.view,id);
+  if(id==='controle')renderControle();
+  if(id==='pairstock')renderPS();
+  if(id==='reposicao')renderReposicao();
+  if(id==='substituicoes')renderSubs();
+  if(id==='tacas')renderTC();
+  if(id==='carta')renderCarta();
+  if(id==='garcons')renderGarcons();
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+function initApp(){
+  document.getElementById('tb-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  renderDashboard();
+  renderControle();
+  renderPS();
+  renderReposicao();
+  renderSubs();
+  renderHarmonizacao();
+  renderTC();
+  renderCarta();
+  renderKPIs();
+  renderGarcons();
+  updateRupBadge();
+  populateSubSelects();
+  // restore last view
+  const lv=ls.get(LS.view,'dashboard');
+  if(PAGE[lv])go(lv);
+  // restore KPI display
+  updateKpiCards();
+  const cnt=Object.keys(estoque).length;
+  if(cnt>0)showToast('✓ '+cnt+' estoques restaurados');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function getStatus(w){
+  const e=estoque[w.id];
+  if(e===undefined)return'empty';
+  if(e===0||e<w.pair_stock)return'critical';
+  if(e<=w.est_min)return'warn';
+  return'ok';
+}
+function statusColor(s){return{ok:'#2d7a4a',warn:'#e8a000',critical:'#c0392b',empty:'#ddd'}[s]||'#ddd';}
+function updateRupBadge(){
+  const r=wines.filter(w=>estoque[w.id]!==undefined&&estoque[w.id]<w.pair_stock).length;
+  document.getElementById('kv-rupt').textContent=r;
+  const b=document.getElementById('nb-rupt');
+  b.style.display=r>0?'inline-flex':'none';
+  if(r>0)b.textContent=r;
+}
+function sparkline(monthly){
+  const max=Math.max(...monthly,1);
+  const tr=monthly[4]>monthly[0]*1.2?'up':(monthly[4]<monthly[0]*0.8?'dn':'');
+  return monthly.map((v,i)=>{
+    const h=Math.max(2,Math.round((v/max)*26));
+    return`<div class="spk-b ${i===4?tr:''}" style="height:${h}px" title="${MONTHS[i]}: ${v}"></div>`;
+  }).join('');
+}
+function fmtTag(f){return`<span class="fmt-tag fmt-${f}">${f}</span>`;}
+function abcBadge(a){return`<span class="abc abc-${a}">${a}</span>`;}
+function stTag(s){const labels={ativo:'Ativo',em_revisao:'Em Revisão',inativo:'Inativo',suspenso:'Suspenso'};return`<span class="st-tag st-${s}">${labels[s]||s}</span>`;}
+function saveAll(){ls.set(LS.estoque,estoque);ls.set(LS.almox,almox);ls.set(LS.wines,wines);ls.set(LS.subs,subs);ls.set(LS.kpis,kpiVals);ls.set(LS.garcons,garcons);}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+function renderDashboard(){
+  const top10=wines.slice(0,10);
+  const maxQ=top10[0].qtde_5m;
+  const cols=['#1a2744','#243358','#2e4070','#38508e','#4260a8','#1a4a2e','#254f36','#2d6040','#367050','#3d8060'];
+  document.getElementById('top10-chart').innerHTML=top10.map((w,i)=>`
+    <div class="bar-row">
+      <div class="bar-lbl" title="${w.nome}">${w.nome.substring(0,26)}${w.nome.length>26?'…':''}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(w.qtde_5m/maxQ*100).toFixed(1)}%;background:${cols[i]}"><span>${w.qtde_5m}</span></div></div>
+    </div>`).join('');
+  // TC trend
+  const tcData=[{m:'Jan',tc:307,gfa:437},{m:'Fev',tc:317,gfa:412},{m:'Mar',tc:460,gfa:441},{m:'Abr',tc:390,gfa:438},{m:'Mai',tc:637,gfa:492}];
+  const mxTC=Math.max(...tcData.map(d=>d.tc+d.gfa));
+  document.getElementById('tc-trend-chart').innerHTML=`<div style="font-size:10px;color:var(--grey);margin-bottom:8px">Volume: TC (🔴) vs Garrafa (🟢)</div>`+tcData.map(d=>`
+    <div class="bar-row" style="margin-bottom:4px">
+      <div class="bar-lbl" style="width:30px">${d.m}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+        <div class="bar-track" style="height:10px"><div class="bar-fill" style="width:${(d.tc/mxTC*100).toFixed(0)}%;background:#8b1a1a"><span>${d.tc}</span></div></div>
+        <div class="bar-track" style="height:10px"><div class="bar-fill" style="width:${(d.gfa/mxTC*100).toFixed(0)}%;background:#1a4a2e"><span>${d.gfa}</span></div></div>
+      </div>
+    </div>`).join('');
+}
+function updateKpiCards(){
+  document.getElementById('kv-ticket').textContent=kpiVals.ticket_medio||'—';
+  document.getElementById('kv-garrafa').textContent=(kpiVals.garrafa_pct||'—')+'%';
+}
+
+// ── CONTROLE DIÁRIO ───────────────────────────────────────────
+function renderControle(){
+  const q=(document.getElementById('srch-ctrl')||{}).value||'';
+  let ws=wines.filter(w=>w.abc==='A'||w.abc==='B'||(estoque[w.id]!==undefined&&estoque[w.id]<w.pair_stock));
+  if(q)ws=ws.filter(w=>w.nome.toLowerCase().includes(q.toLowerCase())||String(w.cod).includes(q));
+  if(filterCtrl==='A')ws=ws.filter(w=>w.abc==='A');
+  else if(filterCtrl==='B')ws=ws.filter(w=>w.abc==='B');
+  else if(filterCtrl==='crit')ws=ws.filter(w=>{const s=getStatus(w);return s==='critical'||s==='warn';});
+  document.getElementById('daily-cards').innerHTML=ws.map(w=>{
+    const est=estoque[w.id]||0;
+    const s=getStatus(w);
+    const pct=est===0?0:Math.min(100,(est/w.est_min)*100);
+    const fc=statusColor(s);
+    const cc={ok:'ok',warn:'warn',critical:'crit',empty:''}[s]||'';
+    // substitution hint
+    const wSubs=subs.filter(sub=>sub.origem_id===w.id&&sub.ativo);
+    const subHint=wSubs.length>0?`<div style="font-size:10px;color:var(--amber);margin-top:6px;padding-top:6px;border-top:1px solid var(--greyl)">⇄ ${wSubs.map(s=>s.tipo==='upsell'?'Upsell: '+s.destino.substring(0,20):'Falta: '+s.destino.substring(0,20)).join(' · ')}</div>`:'';
+    return`<div class="dc ${cc}" id="dc-${w.id}">
+      <div class="dc-hdr"><div><div class="dc-name">${w.nome}</div><div class="dc-cod">Cód.${w.cod} · ${w.formato} · ${w.abc}</div></div>${stTag(w.status)}</div>
+      <div class="dc-metrics">
+        <div><div class="dc-m-val">${w.pair_stock}</div><div class="dc-m-lbl">Pair Stock</div></div>
+        <div><div class="dc-m-val">${w.est_min}</div><div class="dc-m-lbl">Mín.Adega</div></div>
+        <div><div class="dc-m-val">${w.cons_dia.toFixed(1)}</div><div class="dc-m-lbl">Cons/Dia</div></div>
+      </div>
+      <div class="dc-row">
+        <span style="font-size:11px;color:var(--grey)">Estoque:</span>
+        <input type="number" class="dc-sinp" min="0" value="${estoque[w.id]!==undefined?estoque[w.id]:''}" placeholder="—"
+          onchange="updEst(${w.id},this.value)" oninput="updEst(${w.id},this.value)">
+        <span class="sdot sdot-${s==='empty'?'empty':s==='ok'?'ok':s==='warn'?'warn':'crit'}" id="sdot-${w.id}"></span>
+      </div>
+      <div class="dc-bar"><div class="dc-fill" id="dcf-${w.id}" style="width:${pct}%;background:${fc}"></div></div>
+      ${subHint}
+    </div>`;
+  }).join('');
+}
+function updEst(id,val){
+  const parsed=val===''?undefined:(parseInt(val)||0);
+  if(parsed===undefined)delete estoque[id]; else estoque[id]=parsed;
+  ls.set(LS.estoque,estoque);
+  const w=wines.find(x=>x.id===id);if(!w)return;
+  const s=getStatus(w);
+  const pct=estoque[id]===undefined?0:Math.min(100,(estoque[id]/w.est_min)*100);
+  const fc=statusColor(s);
+  const dc=document.getElementById('dc-'+id);
+  if(dc)dc.className='dc '+(s==='empty'?'':s==='ok'?'ok':s==='warn'?'warn':'crit');
+  const dot=document.getElementById('sdot-'+id);
+  if(dot)dot.className='sdot sdot-'+(s==='empty'?'empty':s==='ok'?'ok':s==='warn'?'warn':'crit');
+  const fill=document.getElementById('dcf-'+id);
+  if(fill){fill.style.width=pct+'%';fill.style.background=fc;}
+  updateRupBadge();
+  updPSRow(id);
+  updReposRow(id);
+}
+function setFilterCtrl(f,el){filterCtrl=f;document.querySelectorAll('#view-controle .fb').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderControle();}
+function resetEstoque(){if(!confirm('Apagar todos os estoques salvos?'))return;estoque={};almox={};ls.set(LS.estoque,{});ls.set(LS.almox,{});renderControle();renderPS();renderReposicao();updateRupBadge();showToast('Estoque resetado');}
+function exportDiario(){
+  let txt='CONTROLE DIÁRIO — TERRAÇO ITÁLIA\n'+new Date().toLocaleString('pt-BR')+'\n\nCód.\tVinho\tClasse\tPair Stock\tEstoque\tStatus\n';
+  wines.filter(w=>w.abc==='A'||w.abc==='B').forEach(w=>{
+    const s=getStatus(w);
+    txt+=`${w.cod}\t${w.nome}\t${w.abc}\t${w.pair_stock}\t${estoque[w.id]??'—'}\t${{ok:'OK',warn:'Atenção',critical:'REPOR',empty:'Sem dado'}[s]}\n`;
+  });
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));a.download='controle_diario.txt';a.click();
+  showToast('Exportado');
+}
+
+// ── PAIR STOCK ────────────────────────────────────────────────
+function renderPS(){
+  const q=(document.getElementById('srch-ps')||{}).value||'';
+  let ws=[...wines];
+  if(q)ws=ws.filter(w=>w.nome.toLowerCase().includes(q.toLowerCase())||String(w.cod).includes(q));
+  if(filterPS==='A')ws=ws.filter(w=>w.abc==='A');
+  else if(filterPS==='B')ws=ws.filter(w=>w.abc==='B');
+  else if(filterPS==='C')ws=ws.filter(w=>w.abc==='C');
+  else if(filterPS==='375ml')ws=ws.filter(w=>w.formato==='375ml');
+  else if(filterPS==='em_revisao')ws=ws.filter(w=>w.status==='em_revisao');
+  const sLabels={ok:'✓ OK',warn:'⚠ Atenção',critical:'✗ Repor',empty:'—'};
+  document.getElementById('ps-body').innerHTML=ws.map((w,i)=>{
+    const s=getStatus(w);const sc=statusColor(s);const bg=i%2===0?'#faf7f2':'#fff';
+    const tr=w.monthly[4]>w.monthly[0]*1.2?'↑':(w.monthly[4]<w.monthly[0]*0.8?'↓':'→');
+    const tc=tr==='↑'?'#1a4a2e':(tr==='↓'?'#8b1a1a':'#888');
+    return`<tr style="background:${bg}">
+      <td style="color:#888;font-family:'DM Mono',monospace;font-size:10px">${i+1}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:10px;color:#888">${w.cod}</td>
+      <td><div style="font-weight:500;max-width:260px;font-size:12px">${w.nome}</div></td>
+      <td>${fmtTag(w.formato)}</td>
+      <td>${abcBadge(w.abc)}</td>
+      <td>${stTag(w.status)}</td>
+      ${w.monthly.map(v=>`<td style="font-family:'DM Mono',monospace;font-size:11px;text-align:center;color:#555">${v||''}</td>`).join('')}
+      <td><div class="spk">${sparkline(w.monthly)}</div></td>
+      <td style="font-family:'DM Mono',monospace;font-weight:600;text-align:center">${w.qtde_5m}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;text-align:center;color:#888">${w.cons_dia.toFixed(2)}</td>
+      <td style="font-family:'DM Mono',monospace;font-weight:700;text-align:center;color:var(--navy);font-size:14px">${w.pair_stock}</td>
+      <td style="font-family:'DM Mono',monospace;text-align:center">${w.est_min}</td>
+      <td style="font-family:'DM Mono',monospace;text-align:center">${w.repos_quinzenal}</td>
+      <td><input type="number" class="stock-inp" min="0" value="${estoque[w.id]!==undefined?estoque[w.id]:''}" placeholder="—"
+        onchange="updEst(${w.id},this.value)" oninput="updEst(${w.id},this.value)"></td>
+      <td id="pss-${w.id}" style="font-size:11px;color:${sc};font-weight:600">${estoque[w.id]!==undefined?sLabels[s]:'—'}</td>
+    </tr>`;
+  }).join('');
+}
+function updPSRow(id){
+  const el=document.getElementById('pss-'+id);if(!el)return;
+  const w=wines.find(x=>x.id===id);if(!w)return;
+  const s=getStatus(w);
+  el.style.color=statusColor(s);
+  el.textContent=estoque[id]!==undefined?{ok:'✓ OK',warn:'⚠ Atenção',critical:'✗ Repor',empty:'—'}[s]:'—';
+}
+function setFilterPS(f,el){filterPS=f;document.querySelectorAll('#view-pairstock .fb').forEach(b=>b.classList.remove('on','on-a','on-b','on-c'));el.classList.add('on'+(f==='A'?'-a':f==='B'?'-b':f==='C'?'-c':''));renderPS();}
+
+// ── REPOSIÇÃO ─────────────────────────────────────────────────
+function renderReposicao(){
+  const ws=wines.filter(w=>w.abc==='A'||w.abc==='B');
+  document.getElementById('repos-body').innerHTML=ws.map((w,i)=>{
+    const ax=almox[w.id]||0;const need=ax>0?Math.max(0,w.repos_quinzenal-ax):null;
+    const sc=ax>0?(need>0?'#c0392b':'#2d7a4a'):'#ccc';
+    const sl=ax>0?(need>0?`✗ Pedir ${need}`:'✓ OK'):'—';
+    const bg=i%2===0?'#faf7f2':'#fff';
+    return`<tr style="background:${bg}">
+      <td style="color:#888;font-size:10px;font-family:'DM Mono',monospace">${i+1}</td>
+      <td style="font-size:10px;font-family:'DM Mono',monospace;color:#888">${w.cod}</td>
+      <td><div style="font-weight:500;font-size:12px">${w.nome}</div></td>
+      <td>${abcBadge(w.abc)}</td>
+      <td style="font-family:'DM Mono',monospace;font-weight:700;text-align:center;color:var(--navy)">${w.repos_quinzenal}</td>
+      <td><input type="number" class="stock-inp" min="0" value="${ax||''}" placeholder="—"
+        onchange="updAlmox(${w.id},this.value)" oninput="updAlmox(${w.id},this.value)"></td>
+      <td id="rn-${w.id}" style="font-family:'DM Mono',monospace;font-weight:700;text-align:center;color:${sc}">${ax>0?(need>0?need:'0'):'—'}</td>
+      <td id="rs-${w.id}" style="font-size:11px;font-weight:600;color:${sc}">${sl}</td>
+    </tr>`;
+  }).join('');
+  updReposSummary();
+}
+function updAlmox(id,val){
+  const parsed=val===''?undefined:(parseInt(val)||0);
+  if(parsed===undefined)delete almox[id];else almox[id]=parsed;
+  ls.set(LS.almox,almox);
+  updReposRow(id);updReposSummary();
+}
+function updReposRow(id){
+  const w=wines.find(x=>x.id===id);if(!w)return;
+  const ax=almox[id]||0;const need=ax>0?Math.max(0,w.repos_quinzenal-ax):null;
+  const sc=ax>0?(need>0?'#c0392b':'#2d7a4a'):'#ccc';
+  const rn=document.getElementById('rn-'+id),rs=document.getElementById('rs-'+id);
+  if(rn){rn.textContent=ax>0?(need>0?need:'0'):'—';rn.style.color=sc;}
+  if(rs){rs.textContent=ax>0?(need>0?`✗ Pedir ${need}`:'✓ OK'):'—';rs.style.color=sc;}
+}
+function updReposSummary(){
+  const ws=wines.filter(w=>w.abc==='A'||w.abc==='B');
+  const need=ws.filter(w=>almox[w.id]>0&&w.repos_quinzenal-almox[w.id]>0);
+  const totalGfa=need.reduce((s,w)=>s+Math.max(0,w.repos_quinzenal-(almox[w.id]||0)),0);
+  const urgA=need.filter(w=>w.abc==='A').length;
+  document.getElementById('rp-itens').textContent=need.length||'—';
+  document.getElementById('rp-gfa').textContent=totalGfa||'—';
+  document.getElementById('rp-urg').textContent=urgA||'—';
+}
+function gerarPedido(){
+  const ws=wines.filter(w=>w.abc==='A'||w.abc==='B');
+  const need=ws.filter(w=>almox[w.id]>0&&w.repos_quinzenal-almox[w.id]>0);
+  if(!need.length){showToast('Nenhum déficit identificado');return;}
+  let txt='PEDIDO QUINZENAL — TERRAÇO ITÁLIA\n'+new Date().toLocaleDateString('pt-BR')+'\n\nCód.\tVinho\tClasse\tPedir\n';
+  need.forEach(w=>txt+=`${w.cod}\t${w.nome}\t${w.abc}\t${Math.max(0,w.repos_quinzenal-(almox[w.id]||0))}\n`);
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));a.download='pedido_quinzenal.txt';a.click();
+  showToast('Pedido gerado');
+}
+
+// ── SUBSTITUIÇÕES ─────────────────────────────────────────────
+function populateSubSelects(){
+  const opts=wines.map(w=>`<option value="${w.id}">${w.nome.substring(0,60)}</option>`).join('');
+  document.getElementById('sub-origem').innerHTML=opts;
+  document.getElementById('sub-destino').innerHTML=opts;
+}
+function renderSubs(){
+  let items=filterSub==='all'?subs:subs.filter(s=>s.tipo===filterSub);
+  const typeIco={falta:'🔴',upsell:'🟡',harmonizacao:'🟢'};
+  const typeLabel={falta:'Na Falta De',upsell:'Upselling',harmonizacao:'Harmonização'};
+  if(!items.length){document.getElementById('subs-list').innerHTML='<div style="text-align:center;padding:40px;color:var(--grey)">Nenhuma regra cadastrada. Clique em "+ Nova Regra" para adicionar.</div>';return;}
+  document.getElementById('subs-list').innerHTML=items.map(s=>`
+    <div class="sub-card">
+      <span class="sub-type sub-${s.tipo}">${typeIco[s.tipo]} ${typeLabel[s.tipo]}</span>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="sub-row">
+          <div class="sub-wine">${s.origem}</div>
+          <div class="sub-arrow">→</div>
+          <div class="sub-wine" style="color:var(--gold)">${s.destino}</div>
+        </div>
+        ${currentUser.role==='sommelier'?`<div style="display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm" onclick="toggleSub(${s.id})">${s.ativo?'Pausar':'Ativar'}</button>
+          <button class="btn btn-red btn-sm" onclick="deleteSub(${s.id})">✕</button>
+        </div>`:''}
+      </div>
+      <div class="sub-motivo">${s.motivo}</div>
+      <div class="sub-prio" style="margin-top:6px">Prioridade ${s.prioridade} · ${s.ativo?'<span style="color:var(--green)">Ativa</span>':'<span style="color:var(--grey)">Pausada</span>'}</div>
+    </div>`).join('');
+}
+function setFilterSub(f,el){filterSub=f;document.querySelectorAll('#view-substituicoes .fb').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderSubs();}
+function openSubModal(){document.getElementById('sub-modal').style.display='flex';}
+function closeSubModal(e){if(!e||e.target===document.getElementById('sub-modal'))document.getElementById('sub-modal').style.display='none';}
+async function saveSub(){
+  const oId=parseInt(document.getElementById('sub-origem').value);
+  const dId=parseInt(document.getElementById('sub-destino').value);
+  if(oId===dId){showToast('Origem e destino não podem ser iguais');return;}
+  const s={id:nextSubId++,origem_id:oId,origem:wines.find(w=>w.id===oId)?.nome||'',destino_id:dId,destino:wines.find(w=>w.id===dId)?.nome||'',tipo:document.getElementById('sub-tipo').value,motivo:document.getElementById('sub-motivo').value,prioridade:parseInt(document.getElementById('sub-prio').value),ativo:true};
+  const _sr=await dbSaveSub(s);if(_sr)s.id=_sr.id;subs.push(s);wines.forEach(w=>{if((w.uuid||w.id)===s.origem_id)(w.subs=w.subs||[]).push(s);});saveAll();closeSubModal();renderSubs();showToast('Regra salva'+(DB_ONLINE?' no banco':' (offline)'));
+}
+async function toggleSub(id){const s=subs.find(x=>x.id===id);if(!s)return;s.ativo=!s.ativo;if(s.id?.includes('-'))await dbToggleSub(s.id,s.ativo);saveAll();renderSubs();}
+async function deleteSub(id){if(!confirm('Remover esta regra?'))return;if(id?.includes('-'))await dbDeleteSub(id);subs=subs.filter(x=>x.id!==id);wines.forEach(w=>{if(w.subs)w.subs=w.subs.filter(s=>s.id!==id);});saveAll();renderSubs();showToast('Regra removida');}
+
+// ── HARMONIZAÇÃO ──────────────────────────────────────────────
+
+function renderHarmonizacao(){
+  document.getElementById('harm-grid').innerHTML=HARM.map(h=>`
+    <div class="harm-card">
+      <div class="harm-card-hdr"><div class="harm-icon">${h.icon}</div><div><div class="harm-title">${h.title}</div><div class="harm-sub">${h.sub}</div></div></div>
+      <div class="harm-body">${h.rows.map(r=>`<div class="harm-row"><div class="harm-prato">${r[0]}</div><div class="harm-vinho">${r[1]}</div></div>`).join('')}</div>
+    </div>`).join('');
+}
+
+// ── IMPORT XLS ────────────────────────────────────────────────
+function dragOver(e){e.preventDefault();document.getElementById('import-zone').classList.add('drag');}
+function dragLeave(){document.getElementById('import-zone').classList.remove('drag');}
+function dropFile(e){e.preventDefault();dragLeave();const f=e.dataTransfer.files[0];if(f)processFile(f);}
+function handleFile(inp){const f=inp.files[0];if(f)processFile(f);}
+function log(msg,cls=''){const el=document.getElementById('import-log');el.style.display='block';el.innerHTML+=`<div class="${cls}">${msg}</div>`;el.scrollTop=el.scrollHeight;}
+function processFile(file){
+  log('📂 Lendo: '+file.name);
+  log('⚠️ Processamento real requer backend Supabase.','log-warn');
+  log('Simulando análise do arquivo...','log-warn');
+  setTimeout(()=>{
+    log('✓ Estrutura validada: DESCRIÇÃO · LT · Jan–Dez · Total','log-ok');
+    log('✓ Período detectado: Jan–Mai 2026 (5 meses com dados)','log-ok');
+    log('✓ 231 linhas encontradas','log-ok');
+    log('✓ 153 itens matched automaticamente por nome normalizado','log-ok');
+    log('⚠ 12 itens aguardando revisão manual','log-warn');
+    log('✓ Pair Stock recalculado para todos os itens','log-ok');
+    log('✓ Classificação ABC atualizada','log-ok');
+    log('— Conecte ao Supabase para persistir os dados reais','log-warn');
+    // show review items (simulated)
+    const reviewItems=['VINHO TINTO ESPECIAL CHEF - TC','BLEND EXCLUSIVO TERRAÇO 750ML','ESPUMANTE EVENTO DIC2025'];
+    if(reviewItems.length){
+      document.getElementById('import-review').style.display='block';
+      document.getElementById('review-list').innerHTML=reviewItems.map(name=>`
+        <div class="review-item">
+          <div class="review-name">${name}</div>
+          <span class="review-lt">LT: 0.75</span>
+          <select class="form-sel" style="width:200px;font-size:11px;padding:5px">
+            <option>Selecionar rótulo...</option>
+            ${wines.slice(0,10).map(w=>`<option value="${w.id}">${w.nome.substring(0,40)}</option>`).join('')}
+            <option value="novo">+ Criar novo rótulo</option>
+            <option value="ignorar">Ignorar sempre</option>
+          </select>
+        </div>`).join('');
+    }
+    showToast('Simulação concluída — conecte ao Supabase para import real');
+  },800);
+}
+
+// ── GESTÃO DE TAÇAS ───────────────────────────────────────────
+function renderTC(){
+  const kd=[{n:APP.tc.filter(t=>t.acao==='REMOVER').length,l:'Remover',c:'#8b1a1a',bg:'#fdf0f0'},{n:APP.tc.filter(t=>t.acao==='FUNIL').length,l:'Funil→Gfa',c:'#7a4a00',bg:'#fff8ec'},{n:APP.tc.filter(t=>t.acao==='REVISAR').length,l:'Revisar',c:'#8b4000',bg:'#fff0e0'},{n:APP.tc.filter(t=>t.acao==='MANTER').length,l:'Manter',c:'#1a4a2e',bg:'#edf5f0'}];
+  document.getElementById('tc-kpis').innerHTML=kd.map(k=>`<div style="background:${k.bg};border:1px solid ${k.c}30;border-radius:8px;padding:14px;text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:${k.c}">${k.n}</div><div style="font-size:10px;color:#666;margin-top:3px">${k.l}</div></div>`).join('');
+  filterTCItems('all');
+}
+function setFilterTC(f,el){filterTC=f;document.querySelectorAll('#view-tacas .fb').forEach(b=>b.classList.remove('on'));el.classList.add('on');filterTCItems(f);}
+function filterTCItems(f){
+  const items=f==='all'?APP.tc:APP.tc.filter(t=>t.acao===f);
+  const aL={REMOVER:'🔴 Remover da Carta',FUNIL:'🟡 Funil → Garrafa',REVISAR:'🟠 Recém — Revisar',MANTER:'🟢 Manter'};
+  document.getElementById('tc-body').innerHTML=items.map((t,i)=>{
+    const vals=[t.jan,t.fev,t.mar,t.abr,t.mai];
+    const tr=t.mai>t.jan*1.3&&t.jan>0?'↑ ALTA':t.mai<t.jan*0.7&&t.jan>0?'↓ BAIXA':t.jan===0&&t.mai>0?'🆕 NOVO':'→ ESTÁVEL';
+    const tc=tr.includes('↑')||tr.includes('NOVO')?'#1a4a2e':(tr.includes('↓')?'#8b1a1a':'#888');
+    return`<tr style="background:${i%2===0?'#faf7f2':'#fff'}">
+      <td style="font-weight:600;font-size:12px;max-width:200px">${t.nome}</td>
+      ${vals.map((v,mi)=>`<td style="font-family:'DM Mono',monospace;font-size:11px;text-align:center;${mi===4&&v>0?'font-weight:700;color:#8b1a1a':'color:#555'}">${v||''}</td>`).join('')}
+      <td style="font-family:'DM Mono',monospace;font-weight:700;text-align:center">${t.total}</td>
+      <td style="font-size:11px;font-weight:600;color:${tc};text-align:center">${tr}</td>
+      <td style="text-align:center;font-size:11px;font-weight:600;color:${t.tem_gfa?'#1a4a2e':'#8b1a1a'}">${t.tem_gfa?'✓ SIM':'✗ NÃO'}</td>
+      <td style="text-align:center;font-size:11px;font-weight:600;color:${t.novo_maio?'#8b1a1a':'#888'}">${t.novo_maio?'🆕 SIM':'—'}</td>
+      <td><span class="tc-acao tc-${t.acao}">${aL[t.acao]}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── CARTA DE VINHOS ───────────────────────────────────────────
+function renderCarta(){
+  const q=(document.getElementById('srch-carta')||{}).value||'';
+  let ws=[...wines];
+  if(q)ws=ws.filter(w=>w.nome.toLowerCase().includes(q.toLowerCase()));
+  if(filterCarta==='ativo')ws=ws.filter(w=>w.status==='ativo');
+  else if(filterCarta==='em_revisao')ws=ws.filter(w=>w.status==='em_revisao');
+  else if(filterCarta==='inativo')ws=ws.filter(w=>w.status==='inativo');
+  else if(['tinto','branco','rose','espumante','sobremesa'].includes(filterCarta))ws=ws.filter(w=>w.tipo===filterCarta);
+  const tipoIcon={tinto:'🍷',branco:'🥂',rose:'🌸',espumante:'✨',sobremesa:'🍯',taca:'🥃'};
+  document.getElementById('carta-grid').innerHTML=ws.map(w=>`
+    <div class="carta-card ${w.status}" ${currentUser.role==='sommelier'?`onclick="openWineModal(${w.id})" style="cursor:pointer"`:''}> 
+      <div class="carta-status-bar"></div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:18px">${tipoIcon[w.tipo]||'🍷'}</div>
+        <div style="display:flex;gap:4px;align-items:center">${abcBadge(w.abc)}${stTag(w.status)}</div>
+      </div>
+      <div style="font-weight:600;font-size:12px;line-height:1.3;margin-bottom:6px">${w.nome}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${fmtTag(w.formato)}<span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--grey)">#${w.cod}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;font-family:'DM Mono',monospace;color:var(--grey);border-top:1px solid var(--greyl);padding-top:6px">
+        <span>PS: <b style="color:var(--navy)">${w.pair_stock}</b></span>
+        <span>Cons: <b style="color:var(--navy)">${w.cons_dia.toFixed(2)}/dia</b></span>
+        ${w.preco_venda>0?`<span>R$ <b style="color:var(--gold)">${w.preco_venda.toFixed(0)}</b></span>`:''}
+      </div>
+      ${w.notas_servico?`<div style="font-size:10px;color:var(--grey);margin-top:6px;font-style:italic;border-top:1px solid var(--greyl);padding-top:5px">${w.notas_servico}</div>`:''}
+    </div>`).join('');
+}
+function setFilterCarta(f,el){filterCarta=f;document.querySelectorAll('#view-carta .fb').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderCarta();}
+function openWineModal(id){
+  editingWine=id;
+  document.getElementById('wine-modal').style.display='flex';
+  document.getElementById('wm-title').textContent=id?'Editar Rótulo':'Novo Rótulo';
+  document.getElementById('wm-del').style.display=id?'block':'none';
+  if(id){
+    const w=wines.find(x=>x.id===id);
+    document.getElementById('wm-nome').value=w.nome;
+    document.getElementById('wm-cod').value=w.cod||'';
+    document.getElementById('wm-formato').value=w.formato;
+    document.getElementById('wm-tipo').value=w.tipo;
+    document.getElementById('wm-status').value=w.status;
+    document.getElementById('wm-custo').value=w.preco_custo||'';
+    document.getElementById('wm-venda').value=w.preco_venda||'';
+    document.getElementById('wm-ps').value=w.pair_stock;
+    document.getElementById('wm-notas').value=w.notas_servico||'';
+  } else {
+    ['wm-nome','wm-cod','wm-custo','wm-venda','wm-ps','wm-notas'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('wm-status').value='em_revisao';
+  }
+}
+function closeWineModal(e){if(!e||e.target===document.getElementById('wine-modal'))document.getElementById('wine-modal').style.display='none';}
+async function saveWine(){
+  const nome=document.getElementById('wm-nome').value.trim();
+  if(!nome){showToast('Nome obrigatório');return;}
+  const ps=parseInt(document.getElementById('wm-ps').value)||1;
+  if(editingWine){
+    const w=wines.find(x=>x.id===editingWine);
+    Object.assign(w,{nome:nome.toUpperCase(),cod:parseInt(document.getElementById('wm-cod').value)||w.cod,formato:document.getElementById('wm-formato').value,tipo:document.getElementById('wm-tipo').value,status:document.getElementById('wm-status').value,preco_custo:parseFloat(document.getElementById('wm-custo').value)||0,preco_venda:parseFloat(document.getElementById('wm-venda').value)||0,pair_stock:ps,est_min:ps*2,repos_quinzenal:Math.ceil(ps/1.3*15*1.2),notas_servico:document.getElementById('wm-notas').value});
+  } else {
+    wines.push({id:nextWineId++,cod:parseInt(document.getElementById('wm-cod').value)||99999,nome:nome.toUpperCase(),formato:document.getElementById('wm-formato').value,tipo:document.getElementById('wm-tipo').value,abc:'C',status:document.getElementById('wm-status').value,qtde_5m:0,cons_dia:0,pair_stock:ps,est_min:ps*2,repos_quinzenal:Math.ceil(ps/1.3*15*1.2),monthly:[0,0,0,0,0],preco_custo:parseFloat(document.getElementById('wm-custo').value)||0,preco_venda:parseFloat(document.getElementById('wm-venda').value)||0,notas_servico:document.getElementById('wm-notas').value});
+  }
+  const _wLast=editingWine?wines.find(w=>w.id===editingWine):wines[wines.length-1];const _dbW=await dbSaveWine({..._wLast,uuid:_wLast?.uuid||null});if(_dbW&&_wLast){if(!_wLast.uuid)_wLast.uuid=_dbW.id;}saveAll();closeWineModal();renderCarta();populateSubSelects();showToast('Rótulo salvo'+(DB_ONLINE?' no banco':' (offline)'));
+}
+function deleteWine(){
+  if(!confirm('Remover este rótulo da carta?'))return;
+  wines=wines.filter(x=>x.id!==editingWine);
+  saveAll();closeWineModal();renderCarta();showToast('Rótulo removido');
+}
+
+// ── KPIs ──────────────────────────────────────────────────────
+
+function renderKPIs(){
+  document.getElementById('kpi-inp-grid').innerHTML=KPIS.map(k=>`
+    <div class="ki-card">
+      <div class="ki-title">${k.label}</div>
+      <div class="ki-desc">${k.desc}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <input type="number" id="ki-${k.id}" step="0.1" value="${kpiVals[k.id]||''}" placeholder="Inserir valor..."
+          style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-family:'DM Mono',monospace;font-size:15px;color:var(--navy);outline:none"
+          oninput="calcKPI('${k.id}',this.value,${k.meta},${k.alerta},'${k.unit}',${!!k.reverse})">
+        <span style="font-size:12px;color:var(--grey)">${k.unit}</span>
+      </div>
+      <div class="ki-meta" id="km-${k.id}">Meta: <b>${k.meta}${k.unit}</b> · Alerta: <b>${k.alerta}${k.unit}</b></div>
+      <div class="ki-bar"><div class="ki-fill" id="kf-${k.id}" style="width:0%;background:#ddd"></div></div>
+    </div>`).join('');
+  // render saved values
+  KPIS.forEach(k=>{if(kpiVals[k.id])calcKPI(k.id,kpiVals[k.id],k.meta,k.alerta,k.unit,!!k.reverse);});
+}
+function calcKPI(id,val,meta,alerta,unit,reverse){
+  const v=parseFloat(val);if(isNaN(v))return;
+  kpiVals[id]=v;ls.set(LS.kpis,kpiVals);
+  updateKpiCards();
+  const pct=reverse?Math.min(100,(alerta/Math.max(v,.1))*100):Math.min(100,(v/meta)*100);
+  const color=reverse?(v<=meta?'#2d7a4a':v<=alerta?'#e8a000':'#c0392b'):(v>=meta?'#2d7a4a':v>=alerta?'#e8a000':'#c0392b');
+  const label=reverse?(v<=meta?`✓ Excelente`:(v<=alerta?`⚠ Atenção`:`✗ Crítico`)):(v>=meta?`✓ Meta atingida`:(v>=alerta?`⚠ Atenção`:`✗ Crítico`));
+  const el=document.getElementById('km-'+id),bf=document.getElementById('kf-'+id);
+  if(el)el.innerHTML=`<span style="color:${color};font-weight:600">${label} — ${v}${unit}</span>`;
+  if(bf){bf.style.width=pct+'%';bf.style.background=color;}
+}
+
+// ── CAMPEONATO ────────────────────────────────────────────────
+function renderGarcons(){
+  if(!garcons.length){document.getElementById('garcons-ranking').innerHTML='<div style="text-align:center;padding:40px;color:var(--grey)">Nenhum resultado registrado. Clique em "+ Registrar Resultado".</div>';return;}
+  // calculate scores
+  const scored=garcons.map(g=>{
+    const ticket=g.receita/Math.max(g.com_vinho,1);
+    const taxaGfa=g.com_gfa/Math.max(g.mesas,1)*100;
+    const taxaSegunda=g.duas_gfa/Math.max(g.com_gfa,1)*100;
+    const score=(ticket/180*40)+(taxaGfa/80*30)+(g.receita/5000*20)+(taxaSegunda/25*10);
+    return{...g,ticket:ticket.toFixed(0),taxaGfa:taxaGfa.toFixed(1),taxaSegunda:taxaSegunda.toFixed(1),score:score.toFixed(1)};
+  }).sort((a,b)=>b.score-a.score);
+  document.getElementById('garcons-ranking').innerHTML=`
+    <div class="tw tc-wrap"><table>
+      <thead><tr><th>Pos</th><th>Garçom</th><th>Período</th><th>Mesas</th><th>Receita Vinho</th><th>Ticket Médio</th><th>Taxa Garrafa</th><th>2ª Garrafa</th><th>Score</th></tr></thead>
+      <tbody>${scored.map((g,i)=>`
+        <tr style="background:${i===0?'#fffdf5':i%2===0?'#faf7f2':'#fff'}">
+          <td><span style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:${i===0?'var(--gold)':i===1?'var(--grey)':i===2?'#b87333':'var(--navy)'}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</span></td>
+          <td style="font-weight:600">${g.nome}</td>
+          <td style="font-size:11px;color:var(--grey);font-family:'DM Mono',monospace">${g.periodo}</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace">${g.mesas}</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:600">R$ ${parseFloat(g.receita).toFixed(0)}</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace;color:var(--gold);font-weight:600">R$ ${g.ticket}</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace">${g.taxaGfa}%</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace">${g.taxaSegunda}%</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700;font-size:15px;color:var(--navy)">${g.score}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+function openGarconModal(){editingGarcon=null;['gm-nome','gm-periodo','gm-mesas','gm-receita','gm-com-gfa','gm-duas-gfa','gm-com-vinho'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('garcon-modal').style.display='flex';}
+function closeGarconModal(e){if(!e||e.target===document.getElementById('garcon-modal'))document.getElementById('garcon-modal').style.display='none';}
+async function saveGarcon(){
+  const nome=document.getElementById('gm-nome').value.trim();if(!nome){showToast('Nome obrigatório');return;}
+  const _gd={nome,periodo:document.getElementById('gm-periodo').value,
+    mesas:parseInt(document.getElementById('gm-mesas').value)||0,
+    com_vinho:parseInt(document.getElementById('gm-com-vinho').value)||0,
+    com_gfa:parseInt(document.getElementById('gm-com-gfa').value)||0,
+    duas_gfa:parseInt(document.getElementById('gm-duas-gfa').value)||0,
+    receita:parseFloat(document.getElementById('gm-receita').value)||0};
+  const _gdb=await dbSaveGarcon(_gd);
+  if(_gdb){garcons.push(_gdb);closeGarconModal();renderGarcons();showToast('Salvo no banco');return;}
+  garcons.push({id:Date.now(),nome_garcon:nome,periodo:document.getElementById('gm-periodo').value,mesas:parseInt(document.getElementById('gm-mesas').value)||0,receita:parseFloat(document.getElementById('gm-receita').value)||0,com_gfa:parseInt(document.getElementById('gm-com-gfa').value)||0,duas_gfa:parseInt(document.getElementById('gm-duas-gfa').value)||0,com_vinho:parseInt(document.getElementById('gm-com-vinho').value)||0});
+  saveAll();closeGarconModal();renderGarcons();showToast('Resultado registrado');
+}
+// ── BOOT ────────────────────────────────────────────────────────
+(async () => {
+  await dbInit();  // test Supabase connection
+  // Seed wines before first render so UI is not empty
+  if(!wines.length) wines=[...APP.wines];
+  if(!subs.length)  subs=[...APP.subs];
+  // start app with seed data (instant)
+  const savedUser = ls.get(LS.user, null);
+  // if user already logged in from localStorage, skip PIN
+  // (commented out for security — always require PIN on load)
+})();
+</script>
+</body>
+</html>
