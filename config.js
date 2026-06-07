@@ -2,7 +2,7 @@
 // CONFIGURAÇÃO SUPABASE — Terraço Itália
 // ═══════════════════════════════════════════════════
 const SUPABASE_URL  = 'https://fvwlfoksplfwfcbnenwj.supabase.co';
-const SUPABASE_ANON = 'sb_publishable_ieNBktIwKGsCIwJSTGYPgQ__ypJn13L';
+const SUPABASE_ANON = 'sb_secret_1FTSz4JjJEg9KKx1BrP_Tw_Evv-bLmK';
 
 const USERS_LOCAL = {
   '1234': { nome: 'Diana Milena', role: 'sommelier' },
