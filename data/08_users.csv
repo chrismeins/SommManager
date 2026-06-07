@@ -1,0 +1,4 @@
+id,nome,pin_hash,role,ativo,ultimo_acesso,criado_em
+8edde6e2-91a9-4e53-8a18-16bba9e02b06,Diana Milena Pinilla de Oliveira,81dc9bdb52d04dc20036dbd8313ed055,sommelier,True,,2026-06-06T14:28:40.761471
+dcf658d3-c33f-450f-8f9f-f2f91d326438,Maître de Turno,674f3c2c1a8a6f90461e8a66fb5550ba,maitre,True,,2026-06-06T14:28:40.761471
+828994ba-0a87-48ad-804d-d03824f958af,Staff de Sala,4a7d1ed414474e4033ac29ccb8653d9b,staff,True,,2026-06-06T14:28:40.761471

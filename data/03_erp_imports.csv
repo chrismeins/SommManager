@@ -1,0 +1,2 @@
+id,filename,periodo_inicio,periodo_fim,total_linhas,linhas_ok,linhas_revisao,linhas_erro,status,notas,importado_por,importado_em
+235bc524-964d-4df9-be42-95bf6e6cf2a0,Mensal_de_vinhos_2026_1_.xls,2026-01-01,2026-05-31,231,522,0,0,concluido,Seed inicial Jan-Mai 2026. 153 SKUs.,,2026-06-06T14:28:40.761471

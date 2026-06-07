@@ -1,0 +1,25 @@
+id,wine_id,categoria_prato,prato_especifico,argumento_venda,prioridade,ativo,criado_por,criado_em
+523d9390-8db9-4391-9f32-e1cc44bdfbe0,eae19f34-63ec-45da-95e1-31686e81c64c,entradas_frias,Carpaccio de Atum,"Acidez e frescor que exaltam o sabor delicado do atum. ""O Pinot Grigio é a escolha italiana clássica.""",1,True,,2026-06-06T14:28:40.761471
+e28237ef-3102-45fa-8acc-26cc500f6fa6,67fa170b-ceac-47ab-9ce0-9f948a5dde73,entradas_frias,Ostras ao Natural,Mineralidade que espelha a salinidade das ostras. Servir bem gelado.,1,True,,2026-06-06T14:28:40.761471
+41090f53-d397-4144-936c-bdbfc719bbc6,faae1537-0eff-4cfe-940c-4eb84f4b0d13,entradas_frias,Crudités / Vegetais,Sauvignon Blanc herbal — espelha a frescura dos vegetais.,1,True,,2026-06-06T14:28:40.761471
+1941c04d-acd3-4f96-9491-1d9031c582db,df1b94b0-c924-4566-a927-785e338889ac,massas_branco,Fettuccine Alfredo,"Corpo e textura do Chardonnay espelham a cremosidade do molho. ""O Chardonnay abraça o alfredo.""",1,True,,2026-06-06T14:28:40.761471
+c4f58ca7-4754-4666-9d7a-2be23de53afd,eae19f34-63ec-45da-95e1-31686e81c64c,massas_branco,Pasta Carbonara,Frescor corta a gordura do ovo e do guanciale.,1,True,,2026-06-06T14:28:40.761471
+5ac6df1b-2274-4d6a-ad08-df9483ab63c8,faae1537-0eff-4cfe-940c-4eb84f4b0d13,massas_branco,Cacio e Pepe,Acidez e mineralidade equilibram o sabor do pecorino.,1,True,,2026-06-06T14:28:40.761471
+a5f034a0-b69d-4350-ab2b-44282e7c845d,72c7fb80-1dfa-490a-8ad7-423bd25cda5a,massas_tomate,Penne Amatriciana,"Acidez espelha o tomate — equilíbrio natural. ""Nascido para este prato.""",1,True,,2026-06-06T14:28:40.761471
+85533973-9491-476c-8f23-a15d8a7aa08a,594a9adc-6f1b-4318-89bb-ee686dbdb05e,massas_tomate,Pasta Bolognese,Tanino médio abraça a carne moída.,1,True,,2026-06-06T14:28:40.761471
+3e10e131-6e72-4f99-9559-4983d110c5cb,08ab091d-450b-4599-8452-61b56c283fc1,massas_tomate,Arrabbiata,Tinto leve que equilibra o picante do piment.,1,True,,2026-06-06T14:28:40.761471
+3a1068d6-2e27-4b9e-a40d-2bee558b2b4c,b19c2803-e879-4d9f-b4ec-de74371715af,risoto,Risoto de Funghi Porcini,Terra e especiaria do blend complementam o cogumelo. Servir em taça bordalesa ampla.,1,True,,2026-06-06T14:28:40.761471
+ac25c3e3-7a83-43be-a96e-dfa46bf49fab,eae19f34-63ec-45da-95e1-31686e81c64c,risoto,Risoto alla Milanese,Leveza que não sobrepõe o açafrão delicado.,1,True,,2026-06-06T14:28:40.761471
+ba98a822-8adb-46c9-a7d9-91ac0743127f,faae1537-0eff-4cfe-940c-4eb84f4b0d13,risoto,Risoto de Frutos do Mar,Mineralidade e frescor espelham o mar.,1,True,,2026-06-06T14:28:40.761471
+67534c81-ba90-4958-94fd-861c8752c495,bf8003b6-82f9-4d19-80ce-a0d9d996d14c,carnes_vermelhas,Bistecca Fiorentina,Sangiovese — tanino limpa a gordura da bistecca. Clássico absoluto.,1,True,,2026-06-06T14:28:40.761471
+396c434f-14cf-4bac-a29b-e2393dacb191,594a9adc-6f1b-4318-89bb-ee686dbdb05e,carnes_vermelhas,Ossobuco alla Milanese,"""O Cannonau foi feito para carne — tanino firme, longa persistência.""",1,True,,2026-06-06T14:28:40.761471
+930d02bc-2582-40ff-b3e0-7408030fe64c,b19c2803-e879-4d9f-b4ec-de74371715af,carnes_vermelhas,Carré de Cordeiro,Potência do blend argentino rivaliza com o cordeiro.,1,True,,2026-06-06T14:28:40.761471
+79dbaf47-ccc2-415c-b4aa-2a26f23b49fd,626502f6-fb00-4cd1-859d-6474f10d106c,carnes_vermelhas,Entrecôte / Filé Mignon,Malbec argentino — tanino sedoso que finaliza a proteína.,1,True,,2026-06-06T14:28:40.761471
+a56ab150-d27c-4550-8fd0-1eeafea019b2,df1b94b0-c924-4566-a927-785e338889ac,carnes_brancas,Vitela ao Limão,Chardonnay com carnes brancas delicadas — corpo que não sobrepõe.,1,True,,2026-06-06T14:28:40.761471
+07a10778-dc4d-44be-89b7-915c1c7c19cc,72c7fb80-1dfa-490a-8ad7-423bd25cda5a,carnes_brancas,Frango Grelhado com Ervas,Tinto leve de Sicília — harmonização regional italiana.,1,True,,2026-06-06T14:28:40.761471
+3f2ae7df-6ace-4978-a2f5-c9506ad92b0f,cbebca1a-aed9-4a37-b151-83f9859cfba3,queijos,Tábua de Formaggi,Moscato espumante — doçura + acidez corta a gordura. Encerramento elegante.,1,True,,2026-06-06T14:28:40.761471
+72b0c9d3-b92e-4264-b8a8-b0d0c63a6f07,1979618b-01aa-4aa3-9fa9-0a33808aa155,queijos,Gorgonzola,Pedro Ximenez com queijo azul — contraste clássico doce/salgado.,1,True,,2026-06-06T14:28:40.761471
+b95be616-718b-4c3e-b3ba-5c148ad02b70,cbebca1a-aed9-4a37-b151-83f9859cfba3,sobremesas,Tiramisù,Moscato é a harmonização italiana clássica com tiramisù.,1,True,,2026-06-06T14:28:40.761471
+d396c014-35d3-4d12-92d0-777ae5044df4,0bdacfe0-47b8-4eb5-a92e-ddd289423f2e,sobremesas,Panna Cotta com Frutas,Espumante moscatel — leveza e doçura que acompanham as frutas.,1,True,,2026-06-06T14:28:40.761471
+5d8f9723-7d8f-496c-8f13-57021aa03ae0,91f1dc2f-1dfa-4fb3-82b1-e27a8ce2bf0e,espumante_aperitivo,Boas-vindas,"Espumante de entrada — oferecer assim que a mesa se sentar. ""Começamos com um espumante?""",1,True,,2026-06-06T14:28:40.761471
+cac68799-8049-4315-8b57-a652abd656fa,18009537-a5c2-465d-b879-c044a3742fe6,espumante_aperitivo,Celebrações,"Para mesas em celebração — Champagne eleva o momento. ""Para tornar a ocasião ainda mais especial.""",1,True,,2026-06-06T14:28:40.761471
