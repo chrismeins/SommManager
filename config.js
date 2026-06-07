@@ -2,7 +2,7 @@
 // CONFIGURAÇÃO SUPABASE — Terraço Itália
 // ═══════════════════════════════════════════════════
 const SUPABASE_URL  = 'https://fvwlfoksplfwfcbnenwj.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2d2xmb2tzcGxmd2ZjYm5lbndqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDc2OTcsImV4cCI6MjA5NjMyMzY5N30.jQfGMWcNUmHkBdcnl_IIdGe5SuuMgemrORFuu4YLxEg';
+const SUPABASE_ANON = 'sb_publishable_ieNBktIwKGsCIwJSTGYPgQ__ypJn13L';
 
 const USERS_LOCAL = {
   '1234': { nome: 'Diana Milena', role: 'sommelier' },
