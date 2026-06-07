@@ -213,6 +213,17 @@
           <input type="file" id="f-inp" accept=".xlsx,.xls" style="display:none" onchange="handleFile(this)">
         </div>
         <div class="imp-log" id="imp-log"></div>
+
+        <!-- Review queue — appears after import if unmatched rows exist -->
+        <div id="imp-review" style="display:none;margin-top:18px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div>
+              <div class="sec-title" style="font-size:16px">Revisão Manual</div>
+              <div class="sec-desc"><span id="review-title-count">0</span> rótulos do ERP não identificados automaticamente — associe ou ignore</div>
+            </div>
+          </div>
+          <div id="review-list"></div>
+        </div>
       </div>
 
       <!-- ══ TAÇAS ══ -->

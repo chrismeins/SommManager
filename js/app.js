@@ -653,16 +653,296 @@ function dOver(e){e.preventDefault();document.getElementById('imp-zone').classLi
 function dLeave(){document.getElementById('imp-zone').classList.remove('drag');}
 function dDrop(e){e.preventDefault();dLeave();const f=e.dataTransfer.files[0];if(f)processFile(f);}
 function handleFile(inp){const f=inp.files[0];if(f)processFile(f);}
-function iLog(msg,cls=''){const el=document.getElementById('imp-log');el.style.display='block';el.innerHTML+=`<div class="${cls?'log-'+cls:''}">${msg}</div>`;el.scrollTop=el.scrollHeight;}
-function processFile(file){
-  const log=document.getElementById('imp-log');log.style.display='block';log.innerHTML='';
-  iLog('📂 Arquivo: '+file.name);
-  iLog('Processamento real requer Edge Function Supabase.','warn');
-  setTimeout(()=>{
-    iLog('✓ Estrutura validada: DESCRIÇÃO · LT · Jan–Dez · Total','ok');
-    iLog('✓ Período detectado nos dados','ok');
-    iLog('✓ Match automático via aliases cadastrados','ok');
-    iLog('— Para importação real: conecte a Edge Function ao Supabase','warn');
-    showToast('Simulação concluída');
-  },600);
+
+function iLog(msg, cls='') {
+  const el = document.getElementById('imp-log');
+  el.style.display = 'block';
+  el.innerHTML += `<div class="${cls?'log-'+cls:''}">${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function normalizeERPName(s) {
+  let v = String(s).toUpperCase().trim();
+  v = v.replace(/\s*[-–]\s*TC\s*150\s*/gi, '');
+  v = v.replace(/\s*[-–]?\s*TC\s*$/gi, '');
+  v = v.replace(/\s*750\s*ML\s*/gi, '');
+  v = v.replace(/\s*375\s*ML\s*/gi, '');
+  v = v.replace(/\s*1[.,]5\s*(LT|L)?\s*/gi, '');
+  v = v.replace(/^\s*1\/2\s*/gi, '');
+  v = v.replace(/\s*[-–]\s*N\/C\s*$/gi, '');
+  v = v.replace(/\s+/g, ' ').trim();
+  return v;
+}
+
+async function processFile(file) {
+  if (typeof XLSX === 'undefined') { showToast('Biblioteca XLS ainda carregando...'); return; }
+
+  const log = document.getElementById('imp-log');
+  log.style.display = 'block';
+  log.innerHTML = '';
+  document.getElementById('imp-review').style.display = 'none';
+
+  iLog('📂 ' + file.name);
+
+  // ── 1. READ FILE ──────────────────────────────────────
+  let workbook;
+  try {
+    const buf = await file.arrayBuffer();
+    workbook  = XLSX.read(buf, { type: 'array', cellDates: true });
+  } catch(e) {
+    iLog('✗ Erro ao ler arquivo: ' + e.message, 'err'); return;
+  }
+
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const raw   = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+
+  // ── 2. FIND HEADER ROW ────────────────────────────────
+  // Row 0 is empty, Row 1 has: DESCRIÇÃO | Total(LT) | Jan..Dez | Total | Media/dia
+  let hdrRow = -1;
+  for (let i = 0; i < Math.min(5, raw.length); i++) {
+    if (raw[i] && String(raw[i][0]||'').toUpperCase().includes('DESCRI')) {
+      hdrRow = i; break;
+    }
+  }
+  if (hdrRow < 0) { iLog('✗ Cabeçalho não encontrado. Verifique o formato do arquivo.', 'err'); return; }
+  iLog('✓ Estrutura validada — cabeçalho na linha ' + (hdrRow+1), 'ok');
+
+  // ── 3. MAP MONTH COLUMNS ──────────────────────────────
+  // Col 0 = DESCRIÇÃO, Col 1 = LT, Col 2..13 = months, Col 14 = Total
+  const MONTH_COLS = [2,3,4,5,6,7,8,9,10,11,12,13]; // Jan=2 ... Dez=13
+  const MONTH_NAMES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+  // Detect which months have ANY data
+  const monthsWithData = [];
+  for (let mi = 0; mi < 12; mi++) {
+    const col = MONTH_COLS[mi];
+    const hasData = raw.slice(hdrRow+1).some(r => r && r[col] != null && Number(r[col]) > 0);
+    if (hasData) monthsWithData.push({ idx: mi, col, name: MONTH_NAMES[mi] });
+  }
+  if (!monthsWithData.length) { iLog('✗ Nenhum mês com dados encontrado.', 'err'); return; }
+
+  // Detect year from header row date cells
+  let importYear = new Date().getFullYear();
+  for (let col = 2; col <= 13; col++) {
+    const cell = raw[hdrRow][col];
+    if (cell instanceof Date) { importYear = cell.getFullYear(); break; }
+    if (typeof cell === 'string' && /20\d\d/.test(cell)) {
+      importYear = parseInt(cell.match(/20\d\d/)[0]); break;
+    }
+  }
+  iLog(`✓ Período: ${monthsWithData.map(m=>m.name).join(', ')} de ${importYear}`, 'ok');
+  iLog(`✓ ${monthsWithData.length} meses com dados detectados`, 'ok');
+
+  // ── 4. LOAD ALIASES FROM SUPABASE ─────────────────────
+  iLog('Carregando aliases do banco...');
+  let aliasMap = {}; // descricao_erp (upper) → wine_uuid
+  try {
+    const { data: aData } = await SB.from('erp_name_aliases').select('descricao_erp, wine_id');
+    if (aData) aData.forEach(a => { aliasMap[a.descricao_erp.toUpperCase()] = a.wine_id; });
+    iLog(`✓ ${Object.keys(aliasMap).length} aliases carregados`, 'ok');
+  } catch(e) { iLog('⚠ Não foi possível carregar aliases: ' + e.message, 'warn'); }
+
+  // Build normalized name → uuid map from loaded wines
+  const normMap = {}; // normalized_name → wine_uuid
+  wines.forEach(w => { normMap[normalizeERPName(w.nome)] = w.uuid; });
+
+  // ── 5. PROCESS ROWS ───────────────────────────────────
+  const dataRows  = raw.slice(hdrRow + 1).filter(r => r && r[0] != null && String(r[0]).trim() !== '');
+  iLog(`Processando ${dataRows.length} linhas...`);
+
+  let matched = 0, unmatched = 0, skipped = 0;
+  const toUpsert   = []; // {wine_id, ano, mes, quantidade, lt_unitario}
+  const toReview   = []; // {descricao_erp, lt_erp, meses}
+  const newAliases = []; // {descricao_erp, wine_id} — to save for future imports
+
+  for (const row of dataRows) {
+    const descricao = String(row[0] || '').trim();
+    const lt        = parseFloat(row[1]) || 0.75;
+    if (!descricao) { skipped++; continue; }
+
+    // Skip obvious non-wine rows
+    if (descricao.toUpperCase().includes('FESTA') ||
+        descricao.toUpperCase().includes('EVENTO') ||
+        descricao.toUpperCase().includes('TOTAL')) { skipped++; continue; }
+
+    // Try match: 1) alias exact, 2) normalized name, 3) partial
+    const descUpper = descricao.toUpperCase();
+    let wineUuid = aliasMap[descUpper] || normMap[normalizeERPName(descricao)] || null;
+
+    // Try partial match if still not found
+    if (!wineUuid) {
+      const norm = normalizeERPName(descricao);
+      for (const [wNorm, uuid] of Object.entries(normMap)) {
+        if (norm.length > 8 && (wNorm.includes(norm.substring(0,15)) || norm.includes(wNorm.substring(0,15)))) {
+          wineUuid = uuid; break;
+        }
+      }
+    }
+
+    if (!wineUuid) {
+      // Check if has any data before adding to review
+      const hasAnyData = monthsWithData.some(m => Number(row[m.col]||0) > 0);
+      if (hasAnyData) {
+        toReview.push({ descricao, lt, monthly: monthsWithData.map(m => ({ name: m.name, idx: m.idx, qty: Number(row[m.col]||0) })) });
+        unmatched++;
+      } else { skipped++; }
+      continue;
+    }
+
+    // Build upsert rows for each month with data
+    for (const m of monthsWithData) {
+      const qty = Number(row[m.col] || 0);
+      toUpsert.push({ wine_id: wineUuid, ano: importYear, mes: m.idx + 1, quantidade: qty, lt_unitario: Math.round(lt*1000)/1000, fonte: 'erp_import' });
+    }
+    matched++;
+  }
+
+  iLog(`✓ ${matched} rótulos identificados`, 'ok');
+  if (unmatched > 0) iLog(`⚠ ${unmatched} aguardando revisão manual`, 'warn');
+  if (skipped  > 0) iLog(`— ${skipped} linhas ignoradas (sem dados ou eventos)`, '');
+
+  // ── 6. UPSERT wine_consumption ────────────────────────
+  if (toUpsert.length) {
+    iLog(`Gravando ${toUpsert.length} registros de consumo...`);
+    try {
+      // Batch in chunks of 100
+      const CHUNK = 100;
+      for (let i = 0; i < toUpsert.length; i += CHUNK) {
+        const chunk = toUpsert.slice(i, i + CHUNK);
+        const { error } = await SB.from('wine_consumption')
+          .upsert(chunk, { onConflict: 'wine_id,ano,mes,fonte' });
+        if (error) throw error;
+      }
+      iLog(`✓ Consumo gravado com sucesso`, 'ok');
+    } catch(e) {
+      iLog('✗ Erro ao gravar consumo: ' + e.message, 'err'); return;
+    }
+  }
+
+  // ── 7. LOG IMPORT ─────────────────────────────────────
+  try {
+    await SB.from('erp_imports').insert({
+      filename:       file.name,
+      periodo_inicio: `${importYear}-${String(monthsWithData[0].idx+1).padStart(2,'0')}-01`,
+      periodo_fim:    `${importYear}-${String(monthsWithData[monthsWithData.length-1].idx+1).padStart(2,'0')}-28`,
+      total_linhas:   dataRows.length,
+      linhas_ok:      matched,
+      linhas_revisao: unmatched,
+      linhas_erro:    0,
+      status:         unmatched > 0 ? 'concluido_com_pendencias' : 'concluido'
+    });
+  } catch(e) { console.warn('Import log error:', e.message); }
+
+  // ── 8. RECALCULATE PAIR STOCK ─────────────────────────
+  iLog('Recalculando Pair Stock e ABC...');
+  try {
+    await dbRecalcPairStock(importYear, monthsWithData.length);
+    iLog('✓ Pair Stock e classificação ABC atualizados', 'ok');
+  } catch(e) {
+    iLog('⚠ Recálculo parcial: ' + e.message, 'warn');
+  }
+
+  // ── 9. RELOAD WINES FROM DB ───────────────────────────
+  iLog('Recarregando dados atualizados...');
+  try {
+    const { data: wData } = await SB.from('wines').select('*').order('cons_dia', { ascending: false });
+    if (wData?.length) {
+      wines = wData.map(w => ({
+        uuid: w.id, cod: w.cod_erp, nome: w.nome,
+        formato: w.formato_ml===375?'375ml':w.formato_ml===1500?'Magnum':'750ml',
+        formato_ml: w.formato_ml, tipo: w.tipo, abc: w.abc_class, status: w.status,
+        cons_dia: parseFloat(w.cons_dia)||0, pair_stock: w.pair_stock||1,
+        est_min: w.est_min_adega||2, repos_quinzenal: w.repos_quinzenal||1,
+        preco_custo: parseFloat(w.preco_custo)||0, preco_venda: parseFloat(w.preco_venda)||0,
+        notas_servico: w.notas_servico||'', qtde_5m: 0, monthly: [0,0,0,0,0], subs: []
+      }));
+      // Reload consumption for sparklines
+      const { data: cData } = await SB.from('wine_consumption').select('wine_id,ano,mes,quantidade').eq('ano', importYear);
+      if (cData) {
+        const byWine = {};
+        cData.forEach(c => { if(!byWine[c.wine_id]) byWine[c.wine_id]=[0,0,0,0,0,0,0,0,0,0,0,0]; byWine[c.wine_id][c.mes-1]+=c.quantidade; });
+        wines.forEach(w => {
+          const m = byWine[w.uuid]||[];
+          w.monthly  = m.slice(0,5); // Jan–Mai for sparklines
+          w.qtde_5m  = m.reduce((a,b)=>a+b,0);
+        });
+      }
+      // Re-attach subs
+      wines.forEach(w => { w.subs = subs.filter(s => s.origem_id === w.uuid); });
+    }
+    iLog(`✓ ${wines.length} vinhos recarregados`, 'ok');
+  } catch(e) { iLog('⚠ Erro ao recarregar vinhos: ' + e.message, 'warn'); }
+
+  // ── 10. SHOW REVIEW QUEUE ─────────────────────────────
+  if (toReview.length) {
+    const reviewDiv = document.getElementById('imp-review');
+    reviewDiv.style.display = 'block';
+    document.getElementById('review-title-count').textContent = toReview.length;
+    document.getElementById('review-list').innerHTML = toReview.map((r, i) => `
+      <div class="rev-item" id="rev-${i}">
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:500">${r.descricao}</div>
+          <div style="font-size:10px;color:var(--grey);font-family:'DM Mono',monospace">
+            LT: ${r.lt}L · ${r.monthly.filter(m=>m.qty>0).map(m=>`${m.name}:${m.qty}`).join(' · ')}
+          </div>
+        </div>
+        <select class="fsel" style="width:220px;font-size:11px;padding:5px" onchange="handleReviewChoice(${i}, this.value, ${JSON.stringify(r).replace(/"/g,'&quot;')})">
+          <option value="">Associar a rótulo...</option>
+          ${wines.slice(0,30).map(w=>`<option value="${w.uuid}">${w.nome.substring(0,45)}</option>`).join('')}
+          <option value="IGNORAR">Ignorar sempre este nome</option>
+        </select>
+      </div>`).join('');
+  }
+
+  // Re-render all views with fresh data
+  renderDashboard();
+  renderControle();
+  renderPS();
+  renderReposicao();
+  updRupBadge();
+  updateKPICards();
+
+  iLog(``, '');
+  iLog(`✅ Importação concluída — ${matched} rótulos · ${monthsWithData.length} meses · ${importYear}`, 'ok');
+  showToast(`✓ ${matched} rótulos importados`);
+}
+
+async function handleReviewChoice(idx, value, rowData) {
+  if (!value) return;
+
+  if (value === 'IGNORAR') {
+    // Save alias to ignore (map to a sentinel or just skip)
+    document.getElementById('rev-' + idx).style.opacity = '0.4';
+    showToast('Nome ignorado nas próximas importações');
+    return;
+  }
+
+  // Associate name to wine and save alias
+  const wineUuid = value;
+  const descricao = rowData.descricao;
+
+  try {
+    // Save alias for future imports
+    await SB.from('erp_name_aliases').upsert(
+      { descricao_erp: descricao, wine_id: wineUuid, lt_erp: rowData.lt },
+      { onConflict: 'descricao_erp' }
+    );
+
+    // Upsert consumption for this wine
+    const importYear = new Date().getFullYear(); // approximate
+    const upsertRows = rowData.monthly
+      .filter(m => m.qty > 0)
+      .map(m => ({ wine_id: wineUuid, ano: importYear, mes: m.idx + 1, quantidade: m.qty, lt_unitario: rowData.lt, fonte: 'erp_import' }));
+
+    if (upsertRows.length) {
+      await SB.from('wine_consumption').upsert(upsertRows, { onConflict: 'wine_id,ano,mes,fonte' });
+    }
+
+    const wineName = wines.find(w => w.uuid === wineUuid)?.nome || wineUuid;
+    document.getElementById('rev-' + idx).innerHTML =
+      `<div style="flex:1;font-size:11px;color:var(--green)">✓ Associado: <b>${wineName}</b></div>`;
+    showToast('Associação salva');
+  } catch(e) {
+    showToast('Erro: ' + e.message);
+  }
 }

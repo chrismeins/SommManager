@@ -310,3 +310,58 @@ async function dbSaveGarcon(g) {
     if (error) throw error; return data;
   } catch (e) { console.warn('[DB] saveGarcon:', e.message); return null; }
 }
+
+// ── RECALCULATE PAIR STOCK + ABC ─────────────────────
+// Called after every XLS import.
+// Reads wine_consumption from DB, recalculates cons_dia,
+// pair_stock, est_min_adega, repos_quinzenal, abc_class
+// and updates all wines in one batch.
+async function dbRecalcPairStock(ano, nMeses) {
+  if (!DB_ONLINE || !SB) throw new Error('Banco offline');
+
+  const diasBase = nMeses * 30;
+
+  // 1. Aggregate total consumption per wine for the given year
+  const { data: cons, error: cErr } = await SB
+    .from('wine_consumption')
+    .select('wine_id, quantidade')
+    .eq('ano', ano);
+  if (cErr) throw cErr;
+
+  // Sum by wine
+  const totals = {};
+  (cons || []).forEach(c => {
+    totals[c.wine_id] = (totals[c.wine_id] || 0) + c.quantidade;
+  });
+
+  if (!Object.keys(totals).length) return;
+
+  // 2. Calculate ABC thresholds
+  const volumes = Object.values(totals).sort((a,b) => b-a);
+  const totalVol = volumes.reduce((s,v) => s+v, 0);
+  let cum = 0, threshA = 0, threshB = 0;
+  for (const v of volumes) {
+    cum += v;
+    if (!threshA && cum / totalVol >= 0.70) threshA = v;
+    if (!threshB && cum / totalVol >= 0.90) threshB = v;
+  }
+
+  // 3. Build update payload for each wine
+  const updates = Object.entries(totals).map(([wine_id, total]) => {
+    const cons_dia         = total / diasBase;
+    const pair_stock       = Math.max(1, Math.ceil(cons_dia * 1.3));
+    const est_min_adega    = pair_stock * 2;
+    const repos_quinzenal  = Math.max(1, Math.ceil(cons_dia * 15 * 1.2));
+    const abc_class        = total >= threshA ? 'A' : total >= threshB ? 'B' : 'C';
+    return { id: wine_id, cons_dia: parseFloat(cons_dia.toFixed(3)), pair_stock, est_min_adega, repos_quinzenal, abc_class, dias_base: diasBase };
+  });
+
+  // 4. Upsert in chunks of 50
+  const CHUNK = 50;
+  for (let i = 0; i < updates.length; i += CHUNK) {
+    const { error } = await SB.from('wines').upsert(updates.slice(i, i + CHUNK), { onConflict: 'id' });
+    if (error) throw error;
+  }
+
+  console.log(`[DB] Recalc done: ${updates.length} wines, diasBase=${diasBase}, totalVol=${totalVol}`);
+}
